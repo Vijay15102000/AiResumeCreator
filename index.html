@@ -168,17 +168,24 @@ const fmtDate=v=>{if(!v)return"";const[y,m]=v.split("-");const mo=["Jan","Feb","
 const http=u=>!u?"":/^https?:\/\//i.test(u)?u:"https://"+u;
 const escR=s=>!s?"":String(s).replace(/\\/g,"\\\\").replace(/\{/g,"\\{").replace(/\}/g,"\\}");
 function allSkills(sk){
-  const cats=[sk.frontend&&"Frontend: "+sk.frontend,sk.backend&&"Backend: "+sk.backend,sk.cloud&&"Cloud: "+sk.cloud,sk.database&&"Database: "+sk.database,sk.tools&&"Tools: "+sk.tools,sk.other&&sk.other].filter(Boolean);
-  // If no categories filled but other has content, just use other as-is
-  if(cats.length===0&&sk.other)return{cats:[sk.other]};
-  return{cats};
+  // Tech templates: return labelled categories
+  const cats=[
+    sk.frontend&&"Frontend: "+sk.frontend,
+    sk.backend&&"Backend: "+sk.backend,
+    sk.cloud&&"Cloud: "+sk.cloud,
+    sk.database&&"Database: "+sk.database,
+    sk.tools&&"Tools: "+sk.tools,
+  ].filter(Boolean);
+  // other field — always include as plain text (no label prefix)
+  const other=sk.other?sk.other.trim():"";
+  return{cats,other};
 }
 function buildHTML(tpl,data){
   const{c:color,a:accent,al:align,p:hasPhoto}=tpl;
   const isLeft=align==="left";
   const nameSz=isLeft?"24px":"15px";
   const fn=(data.firstName+" "+data.lastName).trim();
-  const{cats:sc}=allSkills(data.skills);
+  const{cats:sc,other:scOther}=allSkills(data.skills);
   const awards=(data.awards||"").split("\n").map(s=>s.trim()).filter(Boolean);
   const langs=(data.languages||"").split(",").map(s=>s.trim()).filter(Boolean);
   const cj=data.experience.find(e=>e.current&&e.title)||data.experience.find(e=>e.title);
@@ -186,8 +193,15 @@ function buildHTML(tpl,data){
   const cc=cj&&cj.current?cj.company:"";
   const kws=getKW(dt,data.skills);
   const LH="line-height:1.15;";const HA=isLeft?"left":"center";
-  const lnk=(u,l)=>u?'<a href="'+http(u)+'" target="_blank" style="color:'+color+';text-decoration:none;">'+(l||u)+"</a>":"";
-  const ctc=[data.email?'<a href="mailto:'+data.email+'" style="color:inherit;text-decoration:none;">'+data.email+"</a>":"",data.phone?'<a href="tel:'+data.phone+'" style="color:inherit;text-decoration:none;">'+data.phone+"</a>":"",data.location||"",data.linkedin?lnk(data.linkedin,"LinkedIn"):"",data.github?lnk(data.github,"GitHub"):"",data.website?lnk(data.website,"Portfolio"):""].filter(Boolean).join(" &nbsp;|&nbsp; ");
+  const lnk=(u,label)=>u?'<a href="'+http(u)+'" target="_blank" style="color:inherit;text-decoration:none;"><span style="font-weight:700;">'+label+':</span> <span style="color:'+color+';">'+u+"</span></a>":"";
+  const ctc=[
+    data.email?'<a href="mailto:'+data.email+'" style="color:inherit;text-decoration:none;"><span style="font-weight:700;">Email:</span> '+data.email+"</a>":"",
+    data.phone?'<a href="tel:'+data.phone+'" style="color:inherit;text-decoration:none;"><span style="font-weight:700;">Phone:</span> '+data.phone+"</a>":"",
+    data.location?'<span style="font-weight:700;">Location:</span> '+data.location:"",
+    data.linkedin?lnk(data.linkedin,"LinkedIn"):"",
+    data.github?lnk(data.github,"GitHub"):"",
+    data.website?lnk(data.website,"Portfolio"):"",
+  ].filter(Boolean).join(" &nbsp;|&nbsp; ");
   const sec=t=>'<div style="border-bottom:2px solid '+color+';margin:11px 0 5px;padding-bottom:2px;font-size:12px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:'+color+';text-align:'+HA+';'+LH+'">'+t+"</div>";
   const expB=data.experience.filter(e=>e.company||e.title).map(e=>{
     const dates=[fmtDate(e.startDate),e.current?"Present":fmtDate(e.endDate)].filter(Boolean).join(" - ");
@@ -200,7 +214,11 @@ function buildHTML(tpl,data){
   }).join("");
   const certsA=data.certifications.filter(c=>c.name);
   const certB=certsA.length?'<ul style="margin:4px 0 0 18px;padding:0;'+LH+'">'+certsA.map(c=>'<li style="font-size:10px;'+LH+'margin-bottom:3px;"><strong>'+c.name+"</strong>"+(c.issuer?" - "+c.issuer:"")+(c.date?' <span style="color:#666;">('+fmtDate(c.date)+(c.expiry?" - "+fmtDate(c.expiry):"")+")</span>":"")+"</li>").join("")+"</ul>":"";
-  const skB=sc.length?'<ul style="margin:4px 0 0 18px;padding:0;'+LH+'">'+sc.map(cat=>{const i=cat.indexOf(": ");return'<li style="font-size:10px;'+LH+'margin-bottom:3px;"><span style="font-weight:700;color:'+color+';">'+cat.slice(0,i)+":</span> "+cat.slice(i+2)+"</li>";}).join("")+"</ul>":"";
+  const skB=(sc.length||scOther)?
+    '<ul style="margin:4px 0 0 18px;padding:0;'+LH+'">'+
+    sc.map(cat=>{const i=cat.indexOf(": ");return'<li style="font-size:10px;'+LH+'margin-bottom:3px;"><span style="font-weight:700;color:'+color+';">'+cat.slice(0,i)+":</span> "+cat.slice(i+2)+"</li>";}).join("")+
+    (scOther?'<li style="font-size:10px;'+LH+'margin-bottom:3px;">'+scOther+"</li>":"")+
+    "</ul>":"";
   const projA=data.projects.filter(p=>p.name);
   const projB=projA.length?'<ul style="margin:4px 0 0 18px;padding:0;'+LH+'">'+projA.map(p=>'<li style="font-size:10px;'+LH+'margin-bottom:5px;"><strong>'+p.name+"</strong>"+(p.tech?' <span style="color:#666;font-size:10px;">['+p.tech+"]</span>":"")+(p.description?"<div>"+boldKW(p.description,kws)+"</div>":"")+(p.url?"<div>"+lnk(p.url)+"</div>":"")+"</li>").join("")+"</ul>":"";
   const pubA=data.publications.filter(p=>p.title);
@@ -255,7 +273,8 @@ function dlPDF(tpl,data){
 }
 function dlDOCX(tpl,data){
   const name=(data.firstName+" "+data.lastName).trim();
-  const{cats}=allSkills(data.skills);
+  const{cats,other:skOther}=allSkills(data.skills);
+  const allCats=[...cats,...(skOther?[skOther]:[])]; 
   const col=tpl.c.replace("#","");const r=parseInt(col.slice(0,2),16),g=parseInt(col.slice(2,4),16),b=parseInt(col.slice(4,6),16);
   const contact=[data.email,data.phone,data.location,data.linkedin,data.github,data.website].filter(Boolean).join("  |  ");
   const cj=data.experience.find(e=>e.current&&e.title)||data.experience.find(e=>e.title);
@@ -295,7 +314,7 @@ function dlDOCX(tpl,data){
     });
   }
   // Skills
-  if(cats.length){rtf+=secR("Skills");cats.forEach(s=>{rtf+="\\pard\\sb30{\\fs20 "+escR(s)+"}\\par\n";});}
+  if(allCats.length){rtf+=secR("Skills");allCats.forEach(s=>{rtf+="\\pard\\sb30{\\fs20 "+escR(s)+"}\\par\n";});}
   // Certifications
   const certs=data.certifications.filter(c=>c.name);
   if(certs.length){
@@ -701,7 +720,7 @@ function App(){
                     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"0 11px"}}><Inp label="Frontend" value={form.skills.frontend} onChange={v=>setSk("frontend",v)} placeholder="React, Vue, TypeScript"/><Inp label="Backend" value={form.skills.backend} onChange={v=>setSk("backend",v)} placeholder="Node.js, Python, Java"/><Inp label="Cloud" value={form.skills.cloud} onChange={v=>setSk("cloud",v)} placeholder="AWS, Azure, GCP, Docker"/><Inp label="Databases" value={form.skills.database} onChange={v=>setSk("database",v)} placeholder="PostgreSQL, MySQL, MongoDB"/><Inp label="Tools" value={form.skills.tools} onChange={v=>setSk("tools",v)} placeholder="Git, JIRA, Figma, Jenkins"/><Inp label="Other" value={form.skills.other} onChange={v=>setSk("other",v)} placeholder="Agile, Scrum, ML, Leadership"/></div>
                   </div>
                 ):(
-                  <TA label="Technical Skills (comma-separated or one per line)" value={[form.skills.frontend,form.skills.backend,form.skills.cloud,form.skills.database,form.skills.tools,form.skills.other].filter(Boolean).join(", ")||form.skills.other} onChange={v=>setSk("other",v)} placeholder={"List your key skills, tools and technologies relevant to this role.\nExample: Oracle Siebel, SQL, Database Management, Agile, JIRA, Communication"} rows={4}/>
+                  <TA label="Technical Skills (comma-separated or one per line)" value={form.skills.other} onChange={v=>setSk("other",v)} placeholder={"List your key skills, tools and technologies relevant to this role.\nExample: Oracle Siebel, SQL, Database Management, Agile, JIRA, Communication"} rows={4}/>
                 )}
               </Card>
               <Card title="Certifications and Licenses" color={tpl.c} onAdd={()=>addI("certifications",{name:"",issuer:"",date:"",expiry:""})} addLabel="Add Cert">
