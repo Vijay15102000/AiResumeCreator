@@ -1,0 +1,1417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Resume Builder – 25 ATS Templates</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box}
+    html,body,#root{margin:0;padding:0;height:100%;font-family:'Segoe UI',sans-serif}
+    ::-webkit-scrollbar{width:6px;height:6px}
+    ::-webkit-scrollbar-track{background:#f1f1f1}
+    ::-webkit-scrollbar-thumb{background:#bbb;border-radius:3px}
+    ::-webkit-scrollbar-thumb:hover{background:#888}
+  </style>
+</head>
+<body>
+  <div id="root">
+    <div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#0f0c29;color:#fff;font-family:sans-serif;font-size:16px;">
+      Loading Resume Builder…
+    </div>
+  </div>
+  <script type="text/babel" data-presets="react">
+    const { useState, useEffect, useRef } = React;
+
+/* ╔══════════════════════════════════════════════════════════════════════════╗
+   ║  🔑  GEMINI API KEY  —  ONLY PLACE YOU NEED TO CHANGE                  ║
+   ║  Get yours free at: https://aistudio.google.com/app/apikey             ║
+   ╚══════════════════════════════════════════════════════════════════════════╝ */
+const GEMINI_API_KEY = "YOUR_GEMINI_API_KEY_HERE";
+/* ══════════════════════════════════════════════════════════════════════════ */
+
+/* ─── RESPONSIVE WIDTH HOOK ────────────────────────────────────────────── */
+function useWindowWidth() {
+  const [w, setW] = useState(typeof window !== "undefined" ? window.innerWidth : 1024);
+  useEffect(() => {
+    const fn = () => setW(window.innerWidth);
+    window.addEventListener("resize", fn);
+    return () => window.removeEventListener("resize", fn);
+  }, []);
+  return w;
+}
+
+/* ─── 25 TEMPLATES ──────────────────────────────────────────────────────── */
+/*  align:"left"   → name size 24px, section headers left
+    align:"center" → name size 15px, section headers center
+    photo:true     → photo shown on LEFT side, text on right             */
+const TEMPLATES = [
+  { id:1,  name:"Executive Pro",      cat:"Corporate",            color:"#1a237e", accent:"#0d47a1", photo:false, align:"center" },
+  { id:2,  name:"Tech Innovator",     cat:"Technology",           color:"#004d40", accent:"#00796b", photo:false, align:"left"   },
+  { id:3,  name:"Creative Edge",      cat:"Design/Marketing",     color:"#4a148c", accent:"#7b1fa2", photo:true,  align:"center" },
+  { id:4,  name:"Classic Elegance",   cat:"Finance/Law",          color:"#1a1a1a", accent:"#444",    photo:false, align:"left"   },
+  { id:5,  name:"Modern Minimal",     cat:"General",              color:"#bf360c", accent:"#e64a19", photo:false, align:"center" },
+  { id:6,  name:"Healthcare Pro",     cat:"Medical",              color:"#006064", accent:"#00838f", photo:true,  align:"center" },
+  { id:7,  name:"Academic Scholar",   cat:"Education/Research",   color:"#1b5e20", accent:"#2e7d32", photo:false, align:"left"   },
+  { id:8,  name:"Sales Champion",     cat:"Sales/Business",       color:"#e65100", accent:"#f57c00", photo:true,  align:"center" },
+  { id:9,  name:"Entry Level",        cat:"Recent Graduate",      color:"#283593", accent:"#3949ab", photo:false, align:"left"   },
+  { id:10, name:"Federal Resume",     cat:"Government",           color:"#37474f", accent:"#546e7a", photo:false, align:"left"   },
+  { id:11, name:"Startup Hustler",    cat:"Startup/Tech",         color:"#880e4f", accent:"#ad1457", photo:false, align:"left"   },
+  { id:12, name:"Data Scientist",     cat:"Data & Analytics",     color:"#1565c0", accent:"#1976d2", photo:false, align:"left"   },
+  { id:13, name:"Product Manager",    cat:"Product",              color:"#4e342e", accent:"#6d4c41", photo:true,  align:"center" },
+  { id:14, name:"UX Designer",        cat:"Design",               color:"#00695c", accent:"#00897b", photo:true,  align:"center" },
+  { id:15, name:"Nurse Practitioner", cat:"Nursing/Health",       color:"#0d47a1", accent:"#1565c0", photo:true,  align:"center" },
+  { id:16, name:"Legal Professional", cat:"Law",                  color:"#1a1a1a", accent:"#37474f", photo:false, align:"left"   },
+  { id:17, name:"Construction Mgr",   cat:"Engineering/Trades",   color:"#e65100", accent:"#bf360c", photo:false, align:"left"   },
+  { id:18, name:"Teacher/Educator",   cat:"Education",            color:"#1b5e20", accent:"#388e3c", photo:true,  align:"center" },
+  { id:19, name:"Finance Analyst",    cat:"Finance",              color:"#1a237e", accent:"#283593", photo:false, align:"left"   },
+  { id:20, name:"Cybersecurity",      cat:"Security/IT",          color:"#1a1a1a", accent:"#b71c1c", photo:false, align:"left"   },
+  { id:21, name:"Marketing Manager",  cat:"Marketing",            color:"#6a1b9a", accent:"#8e24aa", photo:true,  align:"center" },
+  { id:22, name:"Hospitality Mgr",    cat:"Hospitality/Tourism",  color:"#795548", accent:"#8d6e63", photo:true,  align:"center" },
+  { id:23, name:"Logistics/Supply",   cat:"Supply Chain",         color:"#2e7d32", accent:"#388e3c", photo:false, align:"left"   },
+  { id:24, name:"Creative Writer",    cat:"Media/Journalism",     color:"#4a148c", accent:"#6a1b9a", photo:false, align:"center" },
+  { id:25, name:"HR Professional",    cat:"Human Resources",      color:"#c62828", accent:"#d32f2f", photo:true,  align:"center" },
+];
+
+/* ─── KEYWORD DATABASE ──────────────────────────────────────────────────── */
+const KEYWORD_MAP = {
+  "software engineer":       ["architected","deployed","optimized","CI/CD","microservices","REST API","Docker","Kubernetes","unit testing","scalability","agile","refactored","code review","performance","99.9% uptime"],
+  "frontend engineer":       ["React","Vue","Angular","TypeScript","responsive design","accessibility","Web Vitals","component library","state management","Webpack","lazy loading","A/B testing","PWA","CSS-in-JS","Lighthouse score"],
+  "backend engineer":        ["Node.js","REST API","GraphQL","Redis","caching","OAuth","JWT","microservices","load balancing","CI/CD","database optimization","containerization","message queue","authentication","latency"],
+  "full stack engineer":     ["React","Node.js","PostgreSQL","REST API","CI/CD","Docker","end-to-end","authentication","deployed","automated","integrated","scalable architecture","unit tests","performance"],
+  "devops engineer":         ["Kubernetes","Terraform","CI/CD","Jenkins","GitHub Actions","Prometheus","Grafana","infrastructure as code","auto-scaling","zero downtime","cost optimization","AWS","Azure","GCP","monitoring"],
+  "data scientist":          ["machine learning","Python","TensorFlow","PyTorch","predictive model","F1 score","feature engineering","EDA","SQL","data pipeline","A/B testing","NLP","computer vision","accuracy","deployed model"],
+  "data engineer":           ["ETL","Apache Spark","Kafka","data pipeline","BigQuery","Airflow","Databricks","data warehouse","SQL","Python","data quality","schema design","streaming","batch processing","partitioning"],
+  "data analyst":            ["SQL","Tableau","Power BI","Excel","KPIs","dashboard","trend analysis","data cleaning","stakeholder reporting","A/B testing","forecasting","Python","regression","insight","pivot tables"],
+  "machine learning engineer":["model training","PyTorch","TensorFlow","hyperparameter tuning","MLOps","feature store","AUC-ROC","data augmentation","neural network","GPU","inference","model deployment","precision-recall","ONNX"],
+  "cybersecurity analyst":   ["SIEM","penetration testing","vulnerability assessment","NIST","SOC","incident response","threat intelligence","zero-trust","OWASP","CVE","patching","IAM","encryption","compliance","firewall"],
+  "product manager":         ["roadmap","OKRs","user research","A/B testing","KPIs","stakeholder alignment","sprint planning","user stories","go-to-market","prioritization","retention","NPS","revenue","cross-functional","metrics"],
+  "ux designer":             ["user research","wireframes","prototypes","Figma","usability testing","design system","accessibility","user journey","A/B testing","interaction design","Sketch","InVision","heatmaps","information architecture"],
+  "graphic designer":        ["Adobe Illustrator","Photoshop","InDesign","brand identity","typography","color theory","motion graphics","UI kit","style guide","client presentation","creative brief","print production","deliverables"],
+  "marketing manager":       ["campaign ROI","lead generation","conversion rate","SEO","SEM","email marketing","content strategy","social media","paid ads","HubSpot","Salesforce","brand awareness","MQL","pipeline","attribution"],
+  "sales manager":           ["quota attainment","revenue growth","pipeline","CRM","Salesforce","cold outreach","deal closure","upselling","cross-selling","territory management","forecast","win rate","client retention","ARR","MRR"],
+  "hr professional":         ["talent acquisition","onboarding","performance management","HRIS","employee engagement","succession planning","compliance","DEIB","compensation benchmarking","retention","org design","L&D","workforce planning","ATS"],
+  "project manager":         ["on-time delivery","budget management","risk mitigation","stakeholder communication","Gantt chart","RACI","Agile","Scrum","PMP","scope creep","milestone","cross-functional","resource allocation","ROI"],
+  "finance analyst":         ["financial modeling","DCF","variance analysis","P&L","budget forecasting","Excel","Bloomberg","SQL","ROI","EBITDA","reconciliation","audit","cost reduction","revenue","reporting"],
+  "accountant":              ["GAAP","reconciliation","accounts payable","accounts receivable","audit","tax compliance","financial statements","ERP","QuickBooks","SAP","journal entries","cost accounting","budgeting","forecasting"],
+  "nurse":                   ["patient care","clinical assessment","medication administration","EHR","Epic","care coordination","triage","HIPAA","evidence-based practice","patient education","interdisciplinary","documentation","outcomes"],
+  "nurse practitioner":      ["diagnosis","treatment plan","prescriptive authority","patient outcomes","clinical protocols","telehealth","chronic disease management","preventive care","EHR","HIPAA","collaborative practice","patient education"],
+  "teacher":                 ["curriculum development","differentiated instruction","student outcomes","formative assessment","IEP","classroom management","parent communication","Google Classroom","data-driven","professional development","collaboration"],
+  "construction manager":    ["project delivery","cost control","safety compliance","OSHA","subcontractor management","schedule","RFI","submittals","change orders","BIM","risk assessment","quality assurance","budget","stakeholder"],
+  "logistics manager":       ["supply chain optimization","inventory management","on-time delivery","vendor relations","cost reduction","KPIs","ERP","SAP","demand forecasting","warehouse","last-mile","SLA","procurement","freight"],
+  "legal professional":      ["contract negotiation","due diligence","litigation","compliance","legal research","regulatory","brief writing","client counseling","discovery","IP","M&A","arbitration","risk management","GDPR"],
+  "hospitality manager":     ["guest satisfaction","RevPAR","occupancy rate","front desk operations","revenue management","staff training","complaint resolution","loyalty program","upselling","CRM","event coordination","OTA","F&B"],
+  "creative writer":         ["editorial calendar","content strategy","SEO writing","brand voice","copywriting","engagement","readership growth","multimedia","AP style","deadline","collaboration","interviews","research","headline"],
+  "default":                 ["led","managed","developed","implemented","increased","reduced","improved","delivered","collaborated","optimized","analyzed","designed","automated","launched","achieved"],
+};
+
+function getKeywords(title, skills) {
+  const t = (title || "").toLowerCase().trim();
+  let kw = KEYWORD_MAP[t];
+  if (!kw) {
+    const found = Object.keys(KEYWORD_MAP).find(k => t.includes(k) || k.split(" ").every(w => t.includes(w)));
+    kw = found ? KEYWORD_MAP[found] : [];
+  }
+  const skillWords = Object.values(skills).filter(Boolean).join(",").split(",").map(s => s.trim()).filter(s => s.length > 2).slice(0, 8);
+  return [...new Set([...kw, ...skillWords])].slice(0, 20) || KEYWORD_MAP["default"];
+}
+
+function boldKeywords(text, keywords) {
+  if (!keywords || !keywords.length || !text) return text;
+  const safe = keywords.map(k => k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+  return text.replace(new RegExp("(" + safe.join("|") + ")", "gi"), "<strong>$1</strong>");
+}
+
+/* ─── HELPERS ───────────────────────────────────────────────────────────── */
+const uid = () => Math.random().toString(36).slice(2, 8);
+const parseBullets = s => (s || "").split("\n").map(x => x.replace(/^[-•*]\s*/, "").trim()).filter(Boolean);
+const fmtDate = v => { if (!v) return ""; const [y, m] = v.split("-"); const mo = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]; return m ? mo[+m - 1] + " " + y : y; };
+const http = u => !u ? "" : /^https?:\/\//i.test(u) ? u : "https://" + u;
+const escRTF = s => !s ? "" : String(s).replace(/\\/g,"\\\\").replace(/\{/g,"\\{").replace(/\}/g,"\\}").replace(/[^\x00-\x7F]/g, c => "\\u" + c.charCodeAt(0) + "?");
+
+function allSkills(sk) {
+  const cats = [
+    sk.frontend && "Frontend: " + sk.frontend,
+    sk.backend  && "Backend: "  + sk.backend,
+    sk.cloud    && "Cloud: "    + sk.cloud,
+    sk.database && "Database: " + sk.database,
+    sk.tools    && "Tools: "    + sk.tools,
+    sk.other    && sk.other,
+  ].filter(Boolean);
+  const flat = [sk.frontend, sk.backend, sk.cloud, sk.database, sk.tools, sk.other]
+    .filter(Boolean).join(",").split(",").map(s => s.trim()).filter(Boolean);
+  return { cats, flat };
+}
+
+/* ─── RESUME HTML GENERATOR ─────────────────────────────────────────────── */
+function buildHTML(tpl, data) {
+  const { color, accent, align, photo: hasPhoto } = tpl;
+  const isLeft   = align === "left";
+  const isCenter = align === "center";
+
+  /* name font sizes per spec:
+       left-aligned  → 24px
+       center-aligned → 15px  */
+  const nameSz = isLeft ? "24px" : "15px";
+
+  const fullName = (data.firstName + " " + data.lastName).trim();
+  const { flat: skillList, cats: skillCats } = allSkills(data.skills);
+  const awards    = (data.awards    || "").split("\n").map(s => s.trim()).filter(Boolean);
+  const languages = (data.languages || "").split(",").map(s => s.trim()).filter(Boolean);
+
+  const currentJob = data.experience.find(e => e.current && e.title) || data.experience.find(e => e.title);
+  const displayTitle = (data.jobTitle || "").trim() || (currentJob ? currentJob.title : "");
+  const currentCo   = currentJob && currentJob.current ? currentJob.company : "";
+  const keywords    = getKeywords(displayTitle, data.skills);
+
+  const LH = "line-height:1.15;";
+
+  /* linkify */
+  const lnk = (u, label) => u ? '<a href="' + http(u) + '" target="_blank" style="color:' + color + ';text-decoration:none;">' + (label || u) + "</a>" : "";
+
+  const contactLine = [
+    data.email   ? '<a href="mailto:' + data.email + '" style="color:inherit;text-decoration:none;">' + data.email + "</a>" : "",
+    data.phone   ? '<a href="tel:'    + data.phone + '" style="color:inherit;text-decoration:none;">' + data.phone + "</a>" : "",
+    data.location || "",
+    data.linkedin ? lnk(data.linkedin, "LinkedIn") : "",
+    data.github   ? lnk(data.github,   "GitHub")   : "",
+    data.website  ? lnk(data.website,  "Portfolio"): "",
+  ].filter(Boolean).join(" &nbsp;|&nbsp; ");
+
+  /* Section header – alignment follows heading alignment */
+  const HA = isLeft ? "left" : "center";
+  const sec = title =>
+    '<div style="border-bottom:2px solid ' + color + ';margin:11px 0 5px;padding-bottom:2px;' +
+    'font-size:12px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;' +
+    'color:' + color + ';text-align:' + HA + ';' + LH + '">' + title + "</div>";
+
+  /* ── Experience block ── */
+  const expBlock = data.experience.filter(e => e.company || e.title).map(e => {
+    const dates = [fmtDate(e.startDate), e.current ? "Present" : fmtDate(e.endDate)].filter(Boolean).join(" – ");
+    const bls   = parseBullets(e.bullets);
+    return '<div style="margin-bottom:9px;' + LH + '">' +
+      '<div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;' + LH + '">' +
+        '<span style="font-weight:700;font-size:11.5px;">' + (e.title || "") +
+          (e.company ? ' <span style="font-weight:400;font-style:italic;color:#555;">@ ' + e.company + "</span>" : "") +
+          (e.current ? ' <span style="font-size:9.5px;background:' + color + ';color:#fff;padding:1px 6px;border-radius:10px;font-weight:700;">Current</span>' : "") +
+        "</span>" +
+        '<span style="font-size:10.5px;color:#666;white-space:nowrap;">' + dates + (e.location ? " | " + e.location : "") + "</span>" +
+      "</div>" +
+      (bls.length
+        ? '<ul style="margin:4px 0 0 18px;padding:0;' + LH + '">' +
+            bls.map(b => '<li style="font-size:11px;' + LH + 'margin-bottom:3px;">' + boldKeywords(b, keywords) + "</li>").join("") +
+          "</ul>"
+        : "") +
+    "</div>";
+  }).join("");
+
+  /* ── Education block ── */
+  const eduBlock = data.education.filter(e => e.school).map(e =>
+    '<div style="margin-bottom:7px;display:flex;justify-content:space-between;flex-wrap:wrap;' + LH + '">' +
+      "<div>" +
+        '<div style="font-weight:700;font-size:11.5px;' + LH + '">' + (e.degree || "") + (e.field ? " in " + e.field : "") + "</div>" +
+        '<div style="font-size:11px;color:#444;' + LH + '">' + e.school + (e.honors ? " — " + e.honors : "") + (e.gpa ? " | GPA: " + e.gpa : "") + "</div>" +
+      "</div>" +
+      '<span style="font-size:10.5px;color:#666;white-space:nowrap;">' + [fmtDate(e.startDate), fmtDate(e.endDate)].filter(Boolean).join(" – ") + "</span>" +
+    "</div>"
+  ).join("");
+
+  /* ── Skills block ── */
+  const skillsBlock = skillCats.length
+    ? '<ul style="margin:4px 0 0 18px;padding:0;' + LH + '">' +
+        skillCats.map(cat => {
+          const i = cat.indexOf(": ");
+          return '<li style="font-size:11px;' + LH + 'margin-bottom:3px;"><span style="font-weight:700;color:' + color + ';">' + cat.slice(0, i) + ":</span> " + cat.slice(i + 2) + "</li>";
+        }).join("") +
+      "</ul>"
+    : "";
+
+  /* ── Certifications block ── */
+  const certsArr = data.certifications.filter(c => c.name);
+  const certBlock = certsArr.length
+    ? '<ul style="margin:4px 0 0 18px;padding:0;' + LH + '">' +
+        certsArr.map(c =>
+          '<li style="font-size:11px;' + LH + 'margin-bottom:3px;"><strong>' + c.name + "</strong>" +
+          (c.issuer ? " — " + c.issuer : "") +
+          (c.date   ? ' <span style="color:#666;">(' + fmtDate(c.date) + (c.expiry ? " – " + fmtDate(c.expiry) : "") + ")</span>" : "") +
+          "</li>"
+        ).join("") +
+      "</ul>"
+    : "";
+
+  /* ── Projects block ── */
+  const projArr = data.projects.filter(p => p.name);
+  const projBlock = projArr.length
+    ? '<ul style="margin:4px 0 0 18px;padding:0;' + LH + '">' +
+        projArr.map(p =>
+          '<li style="font-size:11px;' + LH + 'margin-bottom:5px;"><strong>' + p.name + "</strong>" +
+          (p.tech ? ' <span style="color:#666;font-size:10.5px;">[' + p.tech + "]</span>" : "") +
+          (p.description ? "<div>" + boldKeywords(p.description, keywords) + "</div>" : "") +
+          (p.url ? "<div>" + lnk(p.url) + "</div>" : "") +
+          "</li>"
+        ).join("") +
+      "</ul>"
+    : "";
+
+  /* ── Publications block ── */
+  const pubArr = data.publications.filter(p => p.title);
+  const pubBlock = pubArr.length
+    ? '<ol style="margin:4px 0 0 18px;padding:0;' + LH + '">' +
+        pubArr.map(p =>
+          '<li style="font-size:11px;' + LH + 'margin-bottom:4px;">' +
+          (p.authors ? p.authors + ". " : "") + "<em>" + p.title + "</em>" +
+          (p.journal ? ". " + p.journal : "") + (p.year ? " (" + p.year + ")" : "") + ".</li>"
+        ).join("") +
+      "</ol>"
+    : "";
+
+  /* ── Awards / Languages ── */
+  const awardsBlock = awards.length
+    ? '<ul style="margin:4px 0 0 18px;padding:0;' + LH + '">' + awards.map(a => '<li style="font-size:11px;' + LH + 'margin-bottom:3px;">' + a + "</li>").join("") + "</ul>"
+    : "";
+  const langBlock = languages.length
+    ? '<ul style="margin:4px 0 0 18px;padding:0;' + LH + '">' + languages.map(l => '<li style="font-size:11px;' + LH + 'margin-bottom:2px;">' + l + "</li>").join("") + "</ul>"
+    : "";
+
+  const pad = "padding:22px 26px;";
+
+  /* ══════════════════════════════════════════════════════════════════════════
+     LAYOUT A – PHOTO LEFT (photo:true)
+     ▸ Image on the left, name+contact on the right
+     ▸ No colored sidebar → 100% ATS-safe single-column text flow
+     ▸ Name size follows align rule (15px center / 24px left)
+     ══════════════════════════════════════════════════════════════════════════ */
+  if (hasPhoto) {
+    const photoEl = data.photoPreview
+      ? '<img src="' + data.photoPreview + '" style="width:90px;height:90px;border-radius:6px;object-fit:cover;border:2px solid ' + color + ';display:block;flex-shrink:0;" alt="profile"/>'
+      : '<div style="width:90px;height:90px;border-radius:6px;background:#f0f0f0;border:2px dashed #ccc;display:flex;align-items:center;justify-content:center;font-size:30px;flex-shrink:0;">👤</div>';
+
+    const headerBlock =
+      '<div style="display:flex;align-items:flex-start;gap:16px;margin-bottom:14px;padding-bottom:12px;border-bottom:2px solid ' + color + ';' + LH + '">' +
+        photoEl +
+        '<div style="flex:1;">' +
+          '<h1 style="font-size:' + nameSz + ';font-weight:800;color:' + color + ';margin:0;' + LH + '">' + fullName + "</h1>" +
+          (displayTitle
+            ? '<div style="font-size:12px;color:' + accent + ';margin-top:3px;font-style:italic;' + LH + '">' + displayTitle +
+              (currentCo ? ' &nbsp;·&nbsp; <strong style="color:' + color + ';">' + currentCo + "</strong>" : "") + "</div>"
+            : "") +
+          '<div style="font-size:10.5px;color:#555;margin-top:5px;' + LH + '">' + contactLine + "</div>" +
+        "</div>" +
+      "</div>";
+
+    return (
+      '<div style="font-family:Arial,sans-serif;max-width:720px;margin:0 auto;' + pad + 'color:#222;background:#fff;' + LH + '">' +
+        headerBlock +
+        (data.summary ? sec("Professional Summary") + '<p style="font-size:11px;' + LH + 'margin:0;">' + data.summary + "</p>" : "") +
+        (expBlock   ? sec("Work Experience")         + expBlock    : "") +
+        (eduBlock   ? sec("Education")               + eduBlock    : "") +
+        (skillsBlock? sec("Skills")                  + skillsBlock : "") +
+        (certBlock  ? sec("Certifications")          + certBlock   : "") +
+        (projBlock  ? sec("Projects")                + projBlock   : "") +
+        (awardsBlock? sec("Awards & Achievements")   + awardsBlock : "") +
+        (langBlock  ? sec("Languages")               + langBlock   : "") +
+      "</div>"
+    );
+  }
+
+  /* ══════════════════════════════════════════════════════════════════════════
+     LAYOUT B – LEFT ALIGNED (align:"left", no photo)
+     ▸ Name 24px, bold, left-aligned
+     ▸ Section headers left-aligned
+     ══════════════════════════════════════════════════════════════════════════ */
+  if (isLeft) {
+    /* special: template 10 (Federal) gets a dark colour banner */
+    const isFederal = tpl.id === 10;
+    /* special: template 7 (Academic) shows publications */
+    const isAcademic = tpl.id === 7;
+    /* special: template 20 (Cybersecurity) uses red accent left-border */
+    const isCyber = tpl.id === 20;
+
+    const banner = isFederal
+      ? '<div style="background:' + color + ';color:#fff;padding:12px 18px;margin:-22px -26px 14px;' + LH + '">' +
+          '<h1 style="font-size:24px;font-weight:800;margin:0;' + LH + '">' + fullName + "</h1>" +
+          (displayTitle ? '<div style="font-size:12px;color:#ffffffcc;margin-top:3px;' + LH + '">' + displayTitle + (currentCo ? " — " + currentCo : "") + "</div>" : "") +
+          '<div style="font-size:10.5px;color:#ffffffcc;margin-top:5px;' + LH + '">' + contactLine + "</div>" +
+        "</div>"
+      : "";
+
+    const stdHeader = isFederal ? "" :
+      '<div style="margin-bottom:12px;padding-bottom:10px;border-bottom:2px solid ' + color + ';' + LH + '">' +
+        '<h1 style="font-size:24px;font-weight:800;color:' + color + ';margin:0;letter-spacing:0.2px;' + LH + '">' + fullName + "</h1>" +
+        (displayTitle
+          ? '<div style="font-size:12px;color:' + accent + ';margin-top:3px;font-style:italic;' + LH + '">' + displayTitle +
+            (currentCo ? ' &nbsp;·&nbsp; <strong style="color:' + color + ';">' + currentCo + "</strong>" : "") + "</div>"
+          : "") +
+        '<div style="font-size:10.5px;color:#555;margin-top:5px;' + LH + '">' + contactLine + "</div>" +
+      "</div>";
+
+    const federalMeta = isFederal
+      ? (data.citizenship      ? '<div style="font-size:11px;margin-bottom:3px;' + LH + '"><b>Citizenship:</b> ' + data.citizenship + "</div>" : "") +
+        (data.securityClearance ? '<div style="font-size:11px;margin-bottom:3px;' + LH + '"><b>Security Clearance:</b> ' + data.securityClearance + "</div>" : "") +
+        (data.federalGrade      ? '<div style="font-size:11px;margin-bottom:10px;' + LH + '"><b>Federal Grade/Series:</b> ' + data.federalGrade + "</div>" : "")
+      : "";
+
+    return (
+      '<div style="font-family:' + (isCyber ? "'Courier New',monospace" : "Arial,sans-serif") + ';max-width:720px;margin:0 auto;' + pad + 'color:#222;background:#fff;' + LH + '">' +
+        banner + stdHeader + federalMeta +
+        (data.summary ? sec("Professional Summary") + '<p style="font-size:11px;' + LH + 'margin:0;">' + data.summary + "</p>" : "") +
+        (skillsBlock  ? sec("Skills")               + skillsBlock  : "") +
+        (expBlock     ? sec("Work Experience")       + expBlock     : "") +
+        (isAcademic && pubBlock ? sec("Publications") + pubBlock   : "") +
+        (projBlock    ? sec("Projects")              + projBlock    : "") +
+        (eduBlock     ? sec("Education")             + eduBlock     : "") +
+        (certBlock    ? sec("Certifications")        + certBlock    : "") +
+        (awardsBlock  ? sec("Awards & Achievements") + awardsBlock  : "") +
+        (langBlock    ? sec("Languages")             + langBlock    : "") +
+      "</div>"
+    );
+  }
+
+  /* ══════════════════════════════════════════════════════════════════════════
+     LAYOUT C – CENTER ALIGNED (align:"center", no photo)
+     ▸ Name 15px, centered, section headers centered
+     ══════════════════════════════════════════════════════════════════════════ */
+  const isAcademic7 = tpl.id === 7;
+  const accentBar = tpl.id === 5
+    ? '<div style="height:3px;background:' + color + ';margin-bottom:10px;border-radius:2px;"></div>'
+    : "";
+  const byline = tpl.id === 24
+    ? '<div style="text-align:center;font-size:10px;letter-spacing:3px;color:' + color + ';text-transform:uppercase;margin-bottom:8px;">— Portfolio &amp; Writing —</div>'
+    : "";
+
+  return (
+    '<div style="font-family:Arial,sans-serif;max-width:720px;margin:0 auto;' + pad + 'color:#222;background:#fff;' + LH + '">' +
+      byline + accentBar +
+      '<div style="text-align:center;margin-bottom:14px;padding-bottom:12px;border-bottom:2px solid ' + color + ';' + LH + '">' +
+        '<h1 style="font-size:' + nameSz + ';font-weight:800;color:' + color + ';margin:0;letter-spacing:0.5px;' + LH + '">' + fullName + "</h1>" +
+        (displayTitle
+          ? '<div style="font-size:12px;color:' + accent + ';margin-top:4px;font-style:italic;' + LH + '">' + displayTitle +
+            (currentCo ? ' &nbsp;·&nbsp; <strong style="color:' + color + ';">' + currentCo + "</strong>" : "") + "</div>"
+          : "") +
+        '<div style="font-size:10.5px;color:#555;margin-top:6px;' + LH + '">' + contactLine + "</div>" +
+      "</div>" +
+      (data.summary ? sec("Professional Summary") + '<p style="font-size:11px;' + LH + 'margin:0;">' + data.summary + "</p>" : "") +
+      (expBlock    ? sec("Work Experience")        + expBlock    : "") +
+      (eduBlock    ? sec("Education")              + eduBlock    : "") +
+      (skillsBlock ? sec("Skills")                 + skillsBlock : "") +
+      (certBlock   ? sec("Certifications")         + certBlock   : "") +
+      (awardsBlock ? sec("Awards & Achievements")  + awardsBlock : "") +
+      (langBlock   ? sec("Languages")              + langBlock   : "") +
+    "</div>"
+  );
+}
+
+/* ─── DOWNLOAD HELPERS ──────────────────────────────────────────────────── */
+function dlPDF(tpl, data) {
+  const html = buildHTML(tpl, data);
+  const page = "<!DOCTYPE html><html><head><meta charset='UTF-8'><style>*{box-sizing:border-box}body{margin:0}a{color:inherit}</style></head><body>" + html + "</body></html>";
+  const url  = URL.createObjectURL(new Blob([page], { type: "text/html" }));
+  const w    = window.open(url, "_blank");
+  if (w) w.onload = () => { setTimeout(() => { w.print(); URL.revokeObjectURL(url); }, 600); };
+}
+
+function dlDOCX(tpl, data) {
+  const name   = (data.firstName + " " + data.lastName).trim();
+  const { cats } = allSkills(data.skills);
+  const c      = tpl.color.replace("#", "");
+  const r = parseInt(c.slice(0,2),16), g = parseInt(c.slice(2,4),16), b = parseInt(c.slice(4,6),16);
+  const contact = [data.email,data.phone,data.location,data.linkedin,data.github,data.website].filter(Boolean).join("  |  ");
+  const cj  = data.experience.find(e => e.current && e.title) || data.experience.find(e => e.title);
+  const dt  = (data.jobTitle||"").trim() || (cj ? cj.title : "");
+  const secR = t => "\\pard\\sb100{\\b\\fs22\\cf1 " + t.toUpperCase() + "}\\par\\pard{\\cf1 " + Array(55).fill("_").join("") + "}\\par\n";
+  const bul  = t => "\\pard\\li300\\fi-180{\\fs22 \\bullet  " + escRTF(t) + "}\\par\n";
+
+  let rtf = "{\\rtf1\\ansi\\deff0\n{\\fonttbl{\\f0 Arial;}{\\f1 Georgia;}}\n" +
+    "{\\colortbl;\\red" + r + "\\green" + g + "\\blue" + b + ";\\red100\\green100\\blue100;}\n" +
+    "\\paperw12240\\paperh15840\\margl1440\\margr1440\\margt1440\\margb1440\n\\f0\\fs22\\cf0\n";
+  rtf += "\\pard\\qc{\\f1\\fs34\\b\\cf1 " + escRTF(name) + "}\\par\n";
+  if (dt)      rtf += "\\pard\\qc{\\fs22\\i " + escRTF(dt) + "}\\par\n";
+  rtf += "\\pard\\qc{\\fs20\\cf2 " + escRTF(contact) + "}\\par\\par\n";
+  if (data.summary) { rtf += secR("Professional Summary"); rtf += "\\pard\\sb60{\\fs22 " + escRTF(data.summary) + "}\\par\\par\n"; }
+  const exps = data.experience.filter(e => e.company || e.title);
+  if (exps.length) {
+    rtf += secR("Work Experience");
+    exps.forEach(e => {
+      const dates = [fmtDate(e.startDate), e.current ? "Present" : fmtDate(e.endDate)].filter(Boolean).join(" - ");
+      rtf += "\\pard\\sb80{\\b\\fs22 " + escRTF(e.title||"") + "} \\emdash  {\\i " + escRTF(e.company||"") + "}\\tab{\\fs20 " + escRTF(dates) + "}\\par\n";
+      parseBullets(e.bullets).forEach(bl => { rtf += bul(bl); });
+      rtf += "\\par\n";
+    });
+  }
+  const edus = data.education.filter(e => e.school);
+  if (edus.length) {
+    rtf += secR("Education");
+    edus.forEach(e => { rtf += "\\pard\\sb80{\\b\\fs22 " + escRTF((e.degree||"") + (e.field ? " in " + e.field : "")) + "} {\\i " + escRTF(e.school) + "}\\par\\par\n"; });
+  }
+  if (cats.length) { rtf += secR("Skills"); cats.forEach(s => { rtf += "\\pard\\sb40{\\fs22 " + escRTF(s) + "}\\par\n"; }); }
+  const certs = data.certifications.filter(c2 => c2.name);
+  if (certs.length) {
+    rtf += secR("Certifications");
+    certs.forEach(ct => { rtf += "\\pard\\sb60{\\b\\fs22 " + escRTF(ct.name) + "}" + (ct.issuer ? " \\emdash  {\\i " + escRTF(ct.issuer) + "}" : "") + "\\par\n"; });
+  }
+  rtf += "}";
+
+  const url = URL.createObjectURL(new Blob([rtf], { type: "application/msword" }));
+  const a   = document.createElement("a");
+  a.href = url; a.download = (name || "resume").replace(/\s+/g, "_") + "_resume.doc"; a.click();
+  URL.revokeObjectURL(url);
+}
+
+/* ─── EMPTY STATE ───────────────────────────────────────────────────────── */
+const EMPTY_SK = { frontend:"", backend:"", cloud:"", tools:"", database:"", other:"" };
+const EMPTY_FORM = {
+  firstName:"", lastName:"", email:"", phone:"", location:"",
+  linkedin:"", github:"", website:"", photoPreview:null,
+  jobTitle:"", summary:"",
+  experience:  [{ id:"e1", company:"", title:"", startDate:"", endDate:"", current:false, location:"", bullets:"" }],
+  education:   [{ id:"d1", school:"", degree:"", field:"", gpa:"", startDate:"", endDate:"", honors:"" }],
+  skills:      { ...EMPTY_SK },
+  certifications:[{ id:"c1", name:"", issuer:"", date:"", expiry:"" }],
+  projects:    [{ id:"p1", name:"", tech:"", description:"", url:"" }],
+  publications:[{ id:"b1", title:"", journal:"", year:"", authors:"" }],
+  awards:"", languages:"", volunteer:"",
+  citizenship:"", securityClearance:"", federalGrade:"",
+};
+
+/* ─── SMALL UI COMPONENTS ───────────────────────────────────────────────── */
+const IB = { width:"100%", padding:"6px 9px", border:"1px solid #ddd", borderRadius:5, fontSize:12.5, outline:"none", boxSizing:"border-box", fontFamily:"inherit", background:"#fff" };
+
+function Inp({ label, value, onChange, placeholder, type="text", required, min, max }) {
+  return (
+    <div style={{ marginBottom:10 }}>
+      <label style={{ display:"block", fontSize:10.5, fontWeight:600, color:"#555", marginBottom:2, textTransform:"uppercase", letterSpacing:0.4 }}>
+        {label}{required && <span style={{ color:"#e53e3e" }}> *</span>}
+      </label>
+      <input type={type} value={value} onChange={e => onChange(e.target.value)}
+        placeholder={placeholder} min={min} max={max}
+        onKeyDown={type==="number" ? e => { if (["e","E","+","-","."].includes(e.key)) e.preventDefault(); } : undefined}
+        style={IB} />
+    </div>
+  );
+}
+function MonthPick({ label, value, onChange, required }) {
+  return (
+    <div style={{ marginBottom:10 }}>
+      <label style={{ display:"block", fontSize:10.5, fontWeight:600, color:"#555", marginBottom:2, textTransform:"uppercase", letterSpacing:0.4 }}>
+        {label}{required && <span style={{ color:"#e53e3e" }}> *</span>}
+      </label>
+      <input type="month" value={value} onChange={e => onChange(e.target.value)} style={{ ...IB, colorScheme:"light" }} />
+    </div>
+  );
+}
+function LnkInp({ label, value, onChange, placeholder }) {
+  return (
+    <div style={{ marginBottom:10 }}>
+      <label style={{ display:"block", fontSize:10.5, fontWeight:600, color:"#555", marginBottom:2, textTransform:"uppercase", letterSpacing:0.4 }}>{label}</label>
+      <div style={{ display:"flex", gap:5, alignItems:"center" }}>
+        <input type="url" value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} style={{ ...IB, flex:1 }} />
+        {value && <a href={http(value)} target="_blank" rel="noopener noreferrer"
+          style={{ flexShrink:0, padding:"5px 10px", background:"#e3f2fd", color:"#1565c0", borderRadius:5, fontSize:11, fontWeight:600, textDecoration:"none", border:"1px solid #90caf9", whiteSpace:"nowrap" }}>↗ Open</a>}
+      </div>
+    </div>
+  );
+}
+function TA({ label, value, onChange, placeholder, rows=3 }) {
+  return (
+    <div style={{ marginBottom:10 }}>
+      <label style={{ display:"block", fontSize:10.5, fontWeight:600, color:"#555", marginBottom:2, textTransform:"uppercase", letterSpacing:0.4 }}>{label}</label>
+      <textarea value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} rows={rows} style={{ ...IB, resize:"vertical" }} />
+    </div>
+  );
+}
+function Card({ title, color, children, onAdd, addLabel }) {
+  return (
+    <div style={{ marginBottom:14, border:`1px solid ${color}28`, borderRadius:7, overflow:"hidden" }}>
+      <div style={{ background:color, padding:"7px 12px", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+        <span style={{ color:"#fff", fontWeight:700, fontSize:12.5 }}>{title}</span>
+        {onAdd && <button onClick={onAdd} style={{ background:"#ffffff25", border:"none", color:"#fff", padding:"2px 9px", borderRadius:4, cursor:"pointer", fontSize:11.5 }}>+ {addLabel||"Add"}</button>}
+      </div>
+      <div style={{ padding:"12px 14px" }}>{children}</div>
+    </div>
+  );
+}
+
+/* ─── KEYWORD PANEL ─────────────────────────────────────────────────────── */
+function KwPanel({ jobTitle, skills, color, jdKeywords, onInsert }) {
+  const roleKws = getKeywords(jobTitle, skills);
+  const jdSet = new Set((jdKeywords || []).map(k => k.toLowerCase()));
+  const extra = roleKws.filter(k => !jdSet.has(k.toLowerCase()));
+  const hasJd = jdKeywords && jdKeywords.length > 0;
+  if (!jobTitle && !hasJd) return null;
+  return (
+    <div style={{ background:`${color}09`, border:`1px solid ${color}30`, borderRadius:7, padding:"9px 11px", marginBottom:10 }}>
+      {hasJd && (
+        <>
+          <div style={{ fontSize:10.5, fontWeight:700, color:color, marginBottom:6, display:"flex", alignItems:"center", gap:6 }}>
+            <span style={{ background:color, color:"#fff", fontSize:9, padding:"2px 7px", borderRadius:10, fontWeight:700, whiteSpace:"nowrap" }}>FROM JOB DESC</span>
+            <span>Click to add to your bullets:</span>
+          </div>
+          <div style={{ display:"flex", flexWrap:"wrap", gap:5, marginBottom:8 }}>
+            {jdKeywords.map((kw, i) => (
+              <button key={"jd"+i} onClick={() => onInsert(kw)}
+                style={{ background:color, border:"none", color:"#fff", padding:"3px 9px", borderRadius:20, fontSize:10.5, fontWeight:600, cursor:"pointer", boxShadow:`0 2px 6px ${color}50` }}
+                onMouseEnter={e => { e.currentTarget.style.opacity="0.75"; }}
+                onMouseLeave={e => { e.currentTarget.style.opacity="1"; }}>
+                {kw}
+              </button>
+            ))}
+          </div>
+          <div style={{ borderTop:`1px dashed ${color}30`, margin:"6px 0" }} />
+        </>
+      )}
+      {(hasJd ? extra : roleKws).length > 0 && (
+        <>
+          <div style={{ fontSize:10.5, fontWeight:700, color:color, marginBottom:6 }}>
+            💡 {hasJd ? "Additional role keywords:" : `ATS keywords for "${jobTitle}":`}
+          </div>
+          <div style={{ display:"flex", flexWrap:"wrap", gap:5 }}>
+            {(hasJd ? extra : roleKws).slice(0, 16).map((kw, i) => (
+              <button key={"rk"+i} onClick={() => onInsert(kw)}
+                style={{ background:"#fff", border:`1px solid ${color}50`, color:color, padding:"3px 9px", borderRadius:20, fontSize:10.5, fontWeight:600, cursor:"pointer" }}
+                onMouseEnter={e => { e.currentTarget.style.background=color; e.currentTarget.style.color="#fff"; }}
+                onMouseLeave={e => { e.currentTarget.style.background="#fff"; e.currentTarget.style.color=color; }}>
+                {kw}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+      <div style={{ fontSize:9.5, color:"#888", marginTop:6 }}>✦ Keywords in your bullets are <strong>auto-bolded</strong> in the resume output</div>
+    </div>
+  );
+}
+
+/* ─── JD ANALYSIS STEP ──────────────────────────────────────────────────── */
+function JDAnalysisStep({ tpl, onBack, onContinue }) {
+  const [url,       setUrl]       = useState("");
+  const [jdText,    setJdText]    = useState("");
+  const [inputMode, setInputMode] = useState("url");
+  const [loading,   setLoading]   = useState(false);
+  const [statusMsg, setStatus]    = useState("");
+  const [error,     setError]     = useState("");
+  const [analysis,  setAnalysis]  = useState(null);
+
+  const accent = tpl.color === "#1a1a1a" ? "#888" : tpl.color;
+
+  /* single Gemini function for both URL and paste modes */
+  const callGemini = async ({ jobUrl, jobText }) => {
+    const isUrl = !!jobUrl;
+    const prompt = isUrl
+      ? `You are a resume and recruitment expert.\n\nVisit this job posting URL and read the full job description:\n${jobUrl}\n\nAfter reading the page, extract all job details and return ONLY a single valid JSON object with NO markdown fences, NO extra text. Use exactly this schema:\n{\n  "jobTitle": "exact job title from the posting",\n  "company": "company name or null",\n  "experienceYears": "e.g. 3-5 years or 5+ years or null",\n  "experienceLevel": "Junior or Mid-level or Senior or Lead or Principal or null",\n  "techStack": ["all required technologies, languages, frameworks, tools"],\n  "softSkills": ["soft skills and competencies mentioned"],\n  "keywords": ["15 to 20 most important ATS resume keywords as short phrases"],\n  "requirements": ["5 to 7 key must-have requirements as brief strings"],\n  "niceToHave": ["optional or preferred qualifications"],\n  "salaryRange": "salary info if present, else null",\n  "workMode": "Remote or Hybrid or On-site or null",\n  "summary": "2 plain English sentences summarising what they need"\n}`
+      : `You are a resume and recruitment expert. Carefully analyse this job description.\n\nJOB DESCRIPTION:\n"""\n${(jobText||"").slice(0,8000)}\n"""\n\nReturn ONLY a single valid JSON object. NO markdown fences, NO explanation. Use exactly this schema:\n{\n  "jobTitle": "exact job title",\n  "company": "company name or null",\n  "experienceYears": "e.g. 3-5 years or 5+ years or null",\n  "experienceLevel": "Junior or Mid-level or Senior or Lead or Principal or null",\n  "techStack": ["all required technologies, languages, frameworks, tools"],\n  "softSkills": ["soft skills mentioned"],\n  "keywords": ["15 to 20 most important ATS resume keywords as short phrases"],\n  "requirements": ["5 to 7 key must-have requirements as brief strings"],\n  "niceToHave": ["optional or preferred qualifications"],\n  "salaryRange": "salary info if present, else null",\n  "workMode": "Remote or Hybrid or On-site or null",\n  "summary": "2 plain English sentences describing what they need"\n}`;
+
+    const body = {
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: { temperature: 0.1, maxOutputTokens: 1600 }
+    };
+    if (isUrl) body.tools = [{ url_context: {} }];
+
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+      { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }
+    );
+    if (!res.ok) {
+      const t = await res.text().catch(() => "{}");
+      let m = "Unknown error";
+      try { m = JSON.parse(t)?.error?.message || t.slice(0,200); } catch(_) {}
+      throw new Error(`Gemini ${res.status}: ${m}`);
+    }
+    const data  = await res.json();
+    const raw   = (data?.candidates?.[0]?.content?.parts?.[0]?.text || "").replace(/```json|```/gi,"").trim();
+    const match = raw.match(/\{[\s\S]*\}/);
+    if (!match) throw new Error("Gemini returned no JSON. Try pasting the job description text instead.");
+    return JSON.parse(match[0]);
+  };
+
+  const handleUrl = async () => {
+    const trimmed = url.trim();
+    if (!trimmed) { setError("Please enter a job posting URL."); return; }
+    const finalUrl = /^https?:\/\//i.test(trimmed) ? trimmed : "https://" + trimmed;
+    setLoading(true); setError(""); setStatus("Sending URL to Gemini AI…");
+    try { setAnalysis(await callGemini({ jobUrl: finalUrl })); }
+    catch(e) { setError(e.message || "Could not analyse. Try pasting the job description text instead."); }
+    setStatus(""); setLoading(false);
+  };
+
+  const handlePaste = async () => {
+    const trimmed = jdText.trim();
+    if (!trimmed || trimmed.length < 80) { setError("Please paste at least a few sentences of the job description."); return; }
+    setLoading(true); setError(""); setStatus("Sending job description to Gemini AI…");
+    try { setAnalysis(await callGemini({ jobText: trimmed })); }
+    catch(e) { setError(e.message || "Analysis failed. Check your connection and try again."); }
+    setStatus(""); setLoading(false);
+  };
+
+  return (
+    <div style={{ minHeight:"100vh", background:"linear-gradient(135deg,#0f0c29,#302b63,#24243e)", fontFamily:"'Segoe UI',sans-serif", display:"flex", alignItems:"flex-start", justifyContent:"center", padding:"28px 14px" }}>
+      <div style={{ width:"100%", maxWidth:700 }}>
+
+        <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:20 }}>
+          <button onClick={onBack} style={{ background:"#ffffff15", border:"1px solid #ffffff30", color:"#fff", padding:"7px 14px", borderRadius:8, cursor:"pointer", fontSize:13 }}>← Back</button>
+          <div>
+            <div style={{ color:"#ffffffaa", fontSize:10.5 }}>Step 1 of 2 — Job Description Analysis</div>
+            <div style={{ color:"#fff", fontWeight:700, fontSize:15 }}>
+              <span style={{ display:"inline-block", width:11, height:11, background:tpl.color, borderRadius:"50%", marginRight:6, verticalAlign:"middle" }} />
+              {tpl.name}
+            </div>
+          </div>
+        </div>
+
+        <div style={{ background:"#ffffff0d", border:"1px solid #ffffff18", borderRadius:14, overflow:"hidden" }}>
+          <div style={{ background:tpl.color, padding:"15px 20px" }}>
+            <h2 style={{ color:"#fff", margin:0, fontSize:17, fontWeight:800 }}>🎯 Analyse Job Description</h2>
+            <p style={{ color:"#ffffffcc", margin:"4px 0 0", fontSize:12.5 }}>Paste the job URL or text — Gemini AI fetches and analyses it, then prints the full results here.</p>
+          </div>
+
+          <div style={{ padding:"20px" }}>
+
+            {!analysis && (
+              <div style={{ display:"flex", gap:8, marginBottom:16 }}>
+                {[["url","🔗 Job URL"],["paste","📋 Paste Text"]].map(([mode,label]) => (
+                  <button key={mode} onClick={() => { setInputMode(mode); setError(""); }}
+                    style={{ flex:1, padding:"9px 0", borderRadius:8, fontWeight:700, fontSize:13, cursor:"pointer",
+                      border:`2px solid ${inputMode===mode ? tpl.color : "#ffffff22"}`,
+                      background: inputMode===mode ? tpl.color+"25" : "transparent",
+                      color: inputMode===mode ? tpl.color : "#ffffffaa" }}>
+                    {label}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {!analysis && inputMode === "url" && (
+              <div>
+                <label style={{ display:"block", color:"#ffffffcc", fontSize:11, fontWeight:700, marginBottom:6, textTransform:"uppercase", letterSpacing:0.5 }}>Job Posting URL</label>
+                <div style={{ display:"flex", gap:8 }}>
+                  <input value={url} onChange={e => { setUrl(e.target.value); setError(""); }} disabled={loading}
+                    placeholder="https://linkedin.com/jobs/view/...  or  indeed.com/viewjob..."
+                    onKeyDown={e => { if (e.key==="Enter" && !loading) handleUrl(); }}
+                    style={{ flex:1, padding:"10px 13px", borderRadius:8, border:"1px solid #ffffff30", background:"#ffffff12", color:"#fff", fontSize:13, outline:"none", fontFamily:"inherit", opacity:loading?0.6:1 }} />
+                  <button onClick={handleUrl} disabled={loading || !url.trim()}
+                    style={{ padding:"10px 18px", background:loading||!url.trim()?"#555":tpl.color, color:"#fff", border:"none", borderRadius:8, fontWeight:700, fontSize:13, cursor:loading||!url.trim()?"not-allowed":"pointer", whiteSpace:"nowrap" }}>
+                    {loading ? "…" : "Analyse →"}
+                  </button>
+                </div>
+                <div style={{ color:"#ffffff38", fontSize:11, marginTop:7, lineHeight:1.5 }}>
+                  Gemini visits the URL and reads the page directly — works with LinkedIn, Indeed, Glassdoor, Greenhouse, Lever, Workday.<br/>
+                  If the URL fails, switch to <button onClick={() => setInputMode("paste")} style={{ background:"none", border:"none", color:tpl.color, fontSize:11, fontWeight:700, cursor:"pointer", padding:0, textDecoration:"underline" }}>Paste Text</button>.
+                </div>
+              </div>
+            )}
+
+            {!analysis && inputMode === "paste" && (
+              <div>
+                <label style={{ display:"block", color:"#ffffffcc", fontSize:11, fontWeight:700, marginBottom:6, textTransform:"uppercase", letterSpacing:0.5 }}>Paste Full Job Description</label>
+                <textarea value={jdText} onChange={e => { setJdText(e.target.value); setError(""); }} disabled={loading} rows={10}
+                  placeholder={"Paste the full job description here...\n\nAbout the role:\nWe are looking for a Senior Software Engineer...\n\nRequirements:\n• 5+ years of experience with Python and AWS..."}
+                  style={{ width:"100%", padding:"11px 13px", borderRadius:8, border:"1px solid #ffffff30", background:"#ffffff12", color:"#fff", fontSize:12.5, outline:"none", resize:"vertical", fontFamily:"inherit", boxSizing:"border-box", opacity:loading?0.6:1 }} />
+                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", margin:"5px 0 10px" }}>
+                  <span style={{ color: jdText.length > 200 ? "#4ade80" : "#ffffff50", fontSize:11 }}>
+                    {jdText.length} chars {jdText.length > 200 ? "✓ ready" : "(paste more text)"}
+                  </span>
+                  {jdText.length > 0 && <button onClick={() => { setJdText(""); setError(""); }} style={{ background:"none", border:"none", color:"#ff8a80", fontSize:11, cursor:"pointer" }}>✕ Clear</button>}
+                </div>
+                <button onClick={handlePaste} disabled={loading || jdText.trim().length < 80}
+                  style={{ width:"100%", padding:"12px 0", background:loading||jdText.trim().length<80?"#555":`linear-gradient(90deg,${tpl.color},${tpl.accent})`, color:"#fff", border:"none", borderRadius:8, fontWeight:800, fontSize:14, cursor:loading||jdText.trim().length<80?"not-allowed":"pointer" }}>
+                  {loading ? "🔍 Analysing with Gemini…" : "🔍 Analyse Job Description"}
+                </button>
+              </div>
+            )}
+
+            {loading && statusMsg && (
+              <div style={{ display:"flex", alignItems:"center", gap:10, marginTop:14, color:"#ffffffaa", fontSize:13 }}>
+                <span style={{ display:"inline-block", animation:"jdspin 1s linear infinite" }}>⚙️</span>
+                <span>{statusMsg}</span>
+                <style>{"@keyframes jdspin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}"}</style>
+              </div>
+            )}
+
+            {error && !loading && (
+              <div style={{ marginTop:12, padding:"12px 14px", background:"#ff161625", border:"1px solid #ff444440", borderRadius:8 }}>
+                <div style={{ color:"#ff8a80", fontWeight:700, marginBottom:4, fontSize:12.5 }}>⚠️ Error</div>
+                <div style={{ color:"#ffcccc", fontSize:12, lineHeight:1.5 }}>{error}</div>
+              </div>
+            )}
+
+            {analysis && !loading && (
+              <div>
+                <div style={{ background:`${tpl.color}20`, border:`1px solid ${tpl.color}50`, borderRadius:10, padding:"13px 15px", marginBottom:14 }}>
+                  <div style={{ display:"flex", justifyContent:"space-between", flexWrap:"wrap", gap:8, marginBottom:6 }}>
+                    <div>
+                      <div style={{ color:"#fff", fontWeight:800, fontSize:16 }}>{analysis.jobTitle || "Role"}</div>
+                      {analysis.company && <div style={{ color:"#ffffffaa", fontSize:12, marginTop:2 }}>@ {analysis.company}</div>}
+                    </div>
+                    <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
+                      {analysis.workMode    && <span style={{ background:"#ffffff22", color:"#fff", fontSize:10.5, padding:"3px 9px", borderRadius:20, fontWeight:600 }}>{analysis.workMode}</span>}
+                      {analysis.salaryRange && <span style={{ background:"#00c85322", color:"#4ade80", fontSize:10.5, padding:"3px 9px", borderRadius:20, fontWeight:600 }}>{analysis.salaryRange}</span>}
+                    </div>
+                  </div>
+                  {analysis.summary && <div style={{ color:"#ffffffcc", fontSize:12, lineHeight:1.55 }}>{analysis.summary}</div>}
+                </div>
+
+                <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:9, marginBottom:14 }}>
+                  <div style={{ background:"#ffffff0d", border:"1px solid #ffffff18", borderRadius:8, padding:"11px 13px" }}>
+                    <div style={{ color:"#ffffffaa", fontSize:9.5, fontWeight:700, textTransform:"uppercase", letterSpacing:0.8, marginBottom:4 }}>Experience Required</div>
+                    <div style={{ color:"#fff", fontWeight:800, fontSize:17 }}>{analysis.experienceYears || "Not specified"}</div>
+                    {analysis.experienceLevel && <div style={{ color:accent, fontSize:11.5, marginTop:2, fontWeight:600 }}>{analysis.experienceLevel}</div>}
+                  </div>
+                  <div style={{ background:"#ffffff0d", border:"1px solid #ffffff18", borderRadius:8, padding:"11px 13px" }}>
+                    <div style={{ color:"#ffffffaa", fontSize:9.5, fontWeight:700, textTransform:"uppercase", letterSpacing:0.8, marginBottom:4 }}>Tech Stack</div>
+                    <div style={{ color:"#fff", fontWeight:800, fontSize:17 }}>{(analysis.techStack||[]).length} required</div>
+                    <div style={{ color:"#ffffffaa", fontSize:11, marginTop:2 }}>{(analysis.niceToHave||[]).length} nice-to-have</div>
+                  </div>
+                </div>
+
+                {(analysis.techStack||[]).length > 0 && (
+                  <div style={{ marginBottom:13 }}>
+                    <div style={{ color:"#ffffffcc", fontSize:10.5, fontWeight:700, textTransform:"uppercase", letterSpacing:0.8, marginBottom:6 }}>🔧 Required Tech Stack</div>
+                    <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
+                      {analysis.techStack.map((t,i) => <span key={i} style={{ background:tpl.color, color:"#fff", fontSize:11.5, fontWeight:600, padding:"3px 11px", borderRadius:20 }}>{t}</span>)}
+                    </div>
+                  </div>
+                )}
+                {(analysis.niceToHave||[]).length > 0 && (
+                  <div style={{ marginBottom:13 }}>
+                    <div style={{ color:"#ffffffcc", fontSize:10.5, fontWeight:700, textTransform:"uppercase", letterSpacing:0.8, marginBottom:6 }}>⭐ Nice to Have</div>
+                    <div style={{ display:"flex", flexWrap:"wrap", gap:5 }}>
+                      {analysis.niceToHave.map((n,i) => <span key={i} style={{ background:"#ffffff14", color:"#ffffffcc", fontSize:11, padding:"3px 10px", borderRadius:20, border:"1px solid #ffffff22" }}>{n}</span>)}
+                    </div>
+                  </div>
+                )}
+                {(analysis.requirements||[]).length > 0 && (
+                  <div style={{ marginBottom:13 }}>
+                    <div style={{ color:"#ffffffcc", fontSize:10.5, fontWeight:700, textTransform:"uppercase", letterSpacing:0.8, marginBottom:6 }}>✅ Key Requirements</div>
+                    <div style={{ background:"#ffffff09", borderRadius:8, padding:"10px 13px" }}>
+                      {analysis.requirements.map((r,i) => (
+                        <div key={i} style={{ color:"#ffffffcc", fontSize:12, marginBottom:5, display:"flex", gap:8 }}>
+                          <span style={{ color:accent, fontWeight:700, flexShrink:0 }}>•</span><span>{r}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {(analysis.keywords||[]).length > 0 && (
+                  <div style={{ marginBottom:13 }}>
+                    <div style={{ color:"#ffffffcc", fontSize:10.5, fontWeight:700, textTransform:"uppercase", letterSpacing:0.8, marginBottom:6 }}>🎯 ATS Resume Keywords</div>
+                    <div style={{ display:"flex", flexWrap:"wrap", gap:5 }}>
+                      {analysis.keywords.map((k,i) => <span key={i} style={{ background:"#ffffff14", color:"#ffffffdd", fontSize:11, padding:"3px 9px", borderRadius:20, border:"1px solid #ffffff22" }}>{k}</span>)}
+                    </div>
+                    <div style={{ color:"#ffffff40", fontSize:10.5, marginTop:5 }}>Clickable suggestions appear in the bullet-point fields while you write.</div>
+                  </div>
+                )}
+                {(analysis.softSkills||[]).length > 0 && (
+                  <div style={{ marginBottom:16 }}>
+                    <div style={{ color:"#ffffffcc", fontSize:10.5, fontWeight:700, textTransform:"uppercase", letterSpacing:0.8, marginBottom:6 }}>🤝 Soft Skills</div>
+                    <div style={{ display:"flex", flexWrap:"wrap", gap:5 }}>
+                      {analysis.softSkills.map((s,i) => <span key={i} style={{ background:"#ffffff0c", color:"#ffffffaa", fontSize:11, padding:"3px 9px", borderRadius:20 }}>{s}</span>)}
+                    </div>
+                  </div>
+                )}
+
+                <div style={{ display:"flex", gap:9, marginTop:4 }}>
+                  <button onClick={() => { setAnalysis(null); setUrl(""); setJdText(""); setError(""); }}
+                    style={{ flex:1, padding:"11px 0", background:"#ffffff14", border:"1px solid #ffffff28", color:"#fff", borderRadius:8, fontWeight:700, fontSize:13, cursor:"pointer" }}>
+                    ✕ Try Again
+                  </button>
+                  <button onClick={() => onContinue(analysis)}
+                    style={{ flex:2, padding:"11px 0", background:`linear-gradient(90deg,${tpl.color},${tpl.accent})`, color:"#fff", border:"none", borderRadius:8, fontWeight:800, fontSize:14, cursor:"pointer", boxShadow:`0 4px 18px ${tpl.color}55` }}>
+                    ✓ Continue Building Resume →
+                  </button>
+                </div>
+                <div style={{ textAlign:"center", marginTop:10 }}>
+                  <button onClick={() => onContinue(null)} style={{ background:"none", border:"none", color:"#ffffff44", fontSize:11, cursor:"pointer", textDecoration:"underline" }}>
+                    Skip — build without job description
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {!analysis && !loading && (
+              <div style={{ textAlign:"center", marginTop:14 }}>
+                <button onClick={() => onContinue(null)} style={{ background:"none", border:"none", color:"#ffffff44", fontSize:11, cursor:"pointer", textDecoration:"underline" }}>
+                  Skip — build without job description analysis
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+/* ─── AD SIDEBAR ────────────────────────────────────────────────────────── */
+const L_ADS = [
+  { title:"🚀 Resume Review",    sub:"Expert feedback in 24h",    bg:"linear-gradient(135deg,#667eea,#764ba2)", cta:"Try Free"   },
+  { title:"📚 LinkedIn Learning",sub:"Boost your career skills",  bg:"linear-gradient(135deg,#4facfe,#00f2fe)", cta:"Start Today"},
+  { title:"🏆 Career Coaching",  sub:"1-on-1 sessions",          bg:"linear-gradient(135deg,#f7971e,#ffd200)", cta:"Book Now"   },
+  { title:"🛡 LinkedIn Premium",  sub:"Stand out to recruiters",  bg:"linear-gradient(135deg,#0077b5,#00a0dc)", cta:"Try Free"   },
+  { title:"📝 Cover Letter AI",  sub:"Auto-generated in seconds", bg:"linear-gradient(135deg,#43e97b,#38f9d7)", cta:"Generate"   },
+];
+const R_ADS = [
+  { title:"💼 Job Boards",       sub:"1000+ remote jobs daily",  bg:"linear-gradient(135deg,#f093fb,#f5576c)", cta:"Browse Jobs"},
+  { title:"🎓 Certifications",   sub:"Top courses for your field",bg:"linear-gradient(135deg,#fa709a,#fee140)", cta:"Explore"    },
+  { title:"🔍 ATS Scanner",      sub:"Check your resume score",  bg:"linear-gradient(135deg,#30cfd0,#330867)", cta:"Scan Now"   },
+  { title:"💡 Interview Prep",   sub:"Land your dream job faster",bg:"linear-gradient(135deg,#a18cd1,#fbc2eb)", cta:"Practice"  },
+  { title:"📊 Salary Insights",  sub:"Know your market value",   bg:"linear-gradient(135deg,#fddb92,#d1fdff)", cta:"Check Now" },
+];
+
+function AdSidebar({ side }) {
+  const w        = useWindowWidth();
+  const isMobile = w < 768;
+  const isTab    = w >= 768 && w < 1024;
+  if (isMobile && side === "left") return null;
+  const ads = side === "left" ? L_ADS : R_ADS;
+  const sw  = w >= 1024 ? 155 : 125;
+
+  if (isMobile && side === "right") {
+    return (
+      <>
+        <style>{`.adms{position:fixed;bottom:0;left:0;right:0;z-index:99;background:#fff;border-top:2px solid #e8eaed;padding:5px 8px;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}.adms::-webkit-scrollbar{display:none}.admc{flex-shrink:0;width:110px;border-radius:7px;overflow:hidden;text-decoration:none;box-shadow:0 2px 6px rgba(0,0,0,.12)}.adpb{height:75px}`}</style>
+        <div className="adpb" />
+        <div className="adms">
+          <span style={{ fontSize:8.5, fontWeight:700, color:"#bbb", letterSpacing:1, textTransform:"uppercase", alignSelf:"center", paddingRight:3 }}>Ads</span>
+          {ads.map((a,i) => (
+            <a key={i} href="#" className="admc">
+              <div style={{ background:a.bg, padding:"7px 6px", textAlign:"center" }}>
+                <div style={{ fontSize:11, fontWeight:800, color:"#fff", lineHeight:1.2 }}>{a.title}</div>
+                <div style={{ fontSize:8, color:"#ffffffdd", margin:"2px 0 4px" }}>{a.sub}</div>
+                <div style={{ display:"inline-block", background:"rgba(255,255,255,.28)", color:"#fff", fontSize:8.5, fontWeight:700, padding:"2px 8px", borderRadius:20 }}>{a.cta}</div>
+              </div>
+            </a>
+          ))}
+        </div>
+      </>
+    );
+  }
+
+  return (
+    <div style={{ width:sw, flexShrink:0, display:"flex", flexDirection:"column", gap:8,
+      padding:w>=1024?"12px 7px":"10px 5px", background:"#f8f9fa",
+      [side==="left"?"borderRight":"borderLeft"]:"1px solid #e8eaed", overflowY:"auto" }}>
+      <div style={{ fontSize:8.5, fontWeight:700, color:"#bbb", letterSpacing:1, textTransform:"uppercase", textAlign:"center", paddingBottom:4, borderBottom:"1px dashed #e8eaed" }}>
+        {side==="left" ? "◀ Sponsored" : "Sponsored ▶"}
+      </div>
+      {ads.map((a,i) => (
+        <a key={i} href="#"
+          style={{ display:"block", borderRadius:8, overflow:"hidden", textDecoration:"none", boxShadow:"0 2px 7px #00000012", transition:"transform .15s" }}
+          onMouseEnter={e => { e.currentTarget.style.transform="translateY(-2px)"; }}
+          onMouseLeave={e => { e.currentTarget.style.transform=""; }}>
+          <div style={{ background:a.bg, padding:w>=1024?"10px 9px":"8px 7px", textAlign:"center" }}>
+            <div style={{ fontSize:w>=1024?12:10.5, fontWeight:800, color:"#fff", lineHeight:1.3 }}>{a.title}</div>
+            <div style={{ fontSize:w>=1024?9:8.5, color:"#ffffffdd", marginTop:2, marginBottom:w>=1024?6:4 }}>{a.sub}</div>
+            <div style={{ display:"inline-block", background:"rgba(255,255,255,.25)", color:"#fff", fontSize:w>=1024?9.5:9, fontWeight:700, padding:"2px 9px", borderRadius:20, border:"1px solid rgba(255,255,255,.5)" }}>{a.cta}</div>
+          </div>
+        </a>
+      ))}
+      <div style={{ padding:"8px", background:"#fff", borderRadius:8, border:"1px dashed #d0d5dd", textAlign:"center" }}>
+        <div style={{ fontSize:8.5, color:"#bbb", marginBottom:3 }}>Your ad here</div>
+        <div style={{ fontSize:10, fontWeight:600, color:"#1a237e" }}>Advertise</div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── DUMMY DATA FOR GALLERY PREVIEW ───────────────────────────────────── */
+const DUMMY = {
+  firstName: "Alexandra", lastName: "Morrison",
+  jobTitle: "Senior Software Engineer",
+  email: "alex.morrison@email.com", phone: "(415) 555-0192",
+  location: "San Francisco, CA", linkedin: "linkedin.com/in/alexmorrison",
+  github: "github.com/alexmorrison", website: "alexmorrison.dev",
+  summary: "Results-driven engineer with 8+ years delivering scalable cloud solutions. Led cross-functional teams to ship products used by 2M+ users. Expert in React, Node.js, and AWS.",
+  experience: [
+    { id:"d1", title:"Senior Software Engineer", company:"TechCorp Inc.", startDate:"2021-03", endDate:"", current:true, location:"San Francisco, CA",
+      bullets:"- Architected microservices platform handling 50K req/sec reducing latency by 40%\n- Led team of 8 engineers to deploy CI/CD pipeline cutting release time by 60%\n- Implemented Redis caching layer improving database performance by 3x" },
+    { id:"d2", title:"Software Engineer", company:"StartupXYZ", startDate:"2018-06", endDate:"2021-02", current:false, location:"New York, NY",
+      bullets:"- Built REST API serving 1M+ daily active users using Node.js and PostgreSQL\n- Optimized frontend performance achieving 95+ Lighthouse score\n- Delivered 12 product features on schedule with zero critical bugs" },
+  ],
+  education: [
+    { id:"e1", school:"University of California, Berkeley", degree:"B.S.", field:"Computer Science", gpa:"3.8", startDate:"2012-09", endDate:"2016-05", honors:"Magna Cum Laude" },
+  ],
+  skills: { frontend:"React, TypeScript, Vue, HTML5, CSS3", backend:"Node.js, Python, FastAPI, GraphQL", cloud:"AWS, Docker, Kubernetes, GCP", database:"PostgreSQL, MongoDB, Redis", tools:"Git, JIRA, Jenkins, Terraform", other:"Agile, Scrum, Machine Learning" },
+  certifications: [
+    { id:"c1", name:"AWS Solutions Architect – Professional", issuer:"Amazon Web Services", date:"2022-04", expiry:"2025-04" },
+    { id:"c2", name:"Google Cloud Professional", issuer:"Google", date:"2023-01", expiry:"" },
+  ],
+  projects: [
+    { id:"p1", name:"CloudDeploy", tech:"React, Node.js, AWS", description:"Open-source deployment tool with 2K+ GitHub stars.", url:"github.com/alexmorrison/clouddeploy" },
+  ],
+  publications: [{ id:"b1", title:"Scalable Microservices in Production", journal:"IEEE Software", year:"2022", authors:"Morrison, A." }],
+  awards: "Engineer of the Year 2023\nHackathon Winner – TechCrunch Disrupt\nDean's List 2014-2016",
+  languages: "English (Native), Spanish (Fluent), French (Conversational)",
+  volunteer: "Tech mentor at Code for America",
+  citizenship:"U.S. Citizen", securityClearance:"", federalGrade:"GS-13, 2210",
+  photoPreview: "https://api.dicebear.com/7.x/avataaars/svg?seed=Alexandra&backgroundColor=b6e3f4&radius=50",
+};
+
+/* Scaled-down rendered resume card for the gallery */
+function TemplatePreview({ tpl }) {
+  const SCALE = 0.28;
+  const W     = 720;       // resume width in px (logical)
+  const PH    = 900;       // preview height (logical) — we'll clip
+  const cardH = Math.round(PH * SCALE);  // actual card height ≈ 252px
+
+  const previewData = { ...DUMMY };
+  // Use a plain colored circle as stand-in avatar (no external network request needed)
+  if (!tpl.photo) previewData.photoPreview = null;
+  else previewData.photoPreview =
+    "data:image/svg+xml;utf8," + encodeURIComponent(
+      `<svg xmlns='http://www.w3.org/2000/svg' width='90' height='90' viewBox='0 0 90 90'>` +
+      `<rect width='90' height='90' fill='${tpl.color}22'/>` +
+      `<circle cx='45' cy='33' r='18' fill='${tpl.color}88'/>` +
+      `<ellipse cx='45' cy='75' rx='27' ry='20' fill='${tpl.color}88'/>` +
+      `<circle cx='45' cy='33' r='16' fill='${tpl.color}cc'/>` +
+      `<text x='45' y='39' font-family='Arial' font-size='18' fill='white' text-anchor='middle' font-weight='bold'>A</text>` +
+      `</svg>`
+    );
+
+  const rawHTML = buildHTML(tpl, previewData);
+
+  return (
+    <div style={{
+      width: "100%",
+      height: cardH,
+      overflow: "hidden",
+      position: "relative",
+      background: "#fff",
+      borderRadius: "8px 8px 0 0",
+      boxShadow: "inset 0 -3px 8px rgba(0,0,0,0.06)",
+    }}>
+      {/* The scaled iframe-like container */}
+      <div style={{
+        position: "absolute",
+        top: 0,
+        left: 0,
+        width:  W + "px",
+        height: PH + "px",
+        transform: `scale(${SCALE})`,
+        transformOrigin: "top left",
+        pointerEvents: "none",
+        background: "#fff",
+      }}>
+        <div dangerouslySetInnerHTML={{ __html: rawHTML }} />
+      </div>
+
+      {/* subtle template number badge */}
+      <div style={{
+        position:"absolute", top:6, right:7,
+        background: tpl.color + "cc",
+        color:"#fff", fontSize:9, fontWeight:700,
+        padding:"2px 7px", borderRadius:20,
+        backdropFilter:"blur(4px)",
+      }}>#{tpl.id}</div>
+
+      {/* layout badge */}
+      <div style={{
+        position:"absolute", bottom:6, left:7,
+        background:"rgba(0,0,0,0.45)",
+        color:"#fff", fontSize:8.5, fontWeight:600,
+        padding:"2px 7px", borderRadius:20,
+        backdropFilter:"blur(4px)",
+      }}>
+        {tpl.photo ? "📷 Photo-Left" : tpl.align==="center" ? "⊙ Centered" : "⊣ Left-Aligned"}
+      </div>
+    </div>
+  );
+}
+
+/* ─── MAIN APP ──────────────────────────────────────────────────────────── */
+function App() {
+  /* ── ALL STATE & REFS DECLARED FIRST (Rules of Hooks) ── */
+  const [step,    setStep]    = useState("gallery");
+  const [tpl,     setTpl]     = useState(null);
+  const [form,    setForm]    = useState(EMPTY_FORM);
+  const [html,    setHtml]    = useState("");
+  const [busy,    setBusy]    = useState(false);
+  const [jdData,  setJdData]  = useState(null);
+  const jdApplied = useRef(false);
+
+  /* ── ALL EFFECTS DECLARED NEXT ── */
+
+  // Auto-populate form from JD analysis when entering form step
+  useEffect(() => {
+    if (step !== "form") { jdApplied.current = false; return; }
+    if (!jdData || jdApplied.current) return;
+    jdApplied.current = true;
+    setForm(prev => ({
+      ...prev,
+      jobTitle: jdData.jobTitle || prev.jobTitle,
+      skills: {
+        ...prev.skills,
+        other: jdData.techStack && jdData.techStack.length
+          ? jdData.techStack.join(", ").slice(0, 150)
+          : prev.skills.other
+      }
+    }));
+  }, [step, jdData]);
+
+  /* ── HELPER FUNCTIONS ── */
+  const setF   = (k, v)       => setForm(p => ({ ...p, [k]: v }));
+  const setSk  = (k, v)       => setForm(p => ({ ...p, skills: { ...p.skills, [k]: v } }));
+  const setN   = (f, i, k, v) => setForm(p => { const a = [...p[f]]; a[i] = { ...a[i], [k]: v }; return { ...p, [f]: a }; });
+  const addI   = (f, empty)   => setForm(p => ({ ...p, [f]: [...p[f], { ...empty, id: uid() }] }));
+  const delI   = (f, i)       => setForm(p => ({ ...p, [f]: p[f].filter((_, j) => j !== i) }));
+
+  const handlePhoto = e => {
+    const file = e.target.files[0]; if (!file) return;
+    const r = new FileReader();
+    r.onload = ev => setF("photoPreview", ev.target.result);
+    r.readAsDataURL(file);
+  };
+
+  const insertKw = (kw, expIdx) => {
+    const lines = form.experience[expIdx].bullets.split("\n");
+    if (lines.length && lines[lines.length - 1].trim() === "") lines[lines.length - 1] = "- " + kw;
+    else lines.push("- " + kw);
+    setN("experience", expIdx, "bullets", lines.join("\n"));
+  };
+
+  const preview = () => { setHtml(buildHTML(tpl, form)); setStep("preview"); };
+
+  /* ── STEP ROUTING ── */
+
+  /* ── GALLERY ─────────────────────────────────────────────────────────── */
+  if (step === "gallery") return (
+    <div style={{ minHeight:"100vh", background:"linear-gradient(135deg,#0f0c29,#302b63,#24243e)", fontFamily:"'Segoe UI',sans-serif", padding:"24px 14px" }}>
+      <div style={{ maxWidth:1100, margin:"0 auto" }}>
+        <div style={{ textAlign:"center", marginBottom:24 }}>
+          <div style={{ display:"inline-block", background:"linear-gradient(90deg,#f6d365,#fda085)", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", fontSize:11.5, fontWeight:700, letterSpacing:3, textTransform:"uppercase", marginBottom:6 }}>
+            ATS-OPTIMIZED · 95%+ SCORE
+          </div>
+          <h1 style={{ color:"#fff", fontSize:30, fontWeight:800, margin:"0 0 7px" }}>Resume Builder</h1>
+          <p style={{ color:"#ffffffaa", fontSize:13, margin:0 }}>25 templates · Smart keyword suggestions · Photo-left layout · Download Word or PDF</p>
+        </div>
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(210px,1fr))", gap:14 }}>
+          {TEMPLATES.map(t => (
+            <div key={t.id} onClick={() => { setTpl(t); setForm(EMPTY_FORM); setJdData(null); setStep("jd"); }}
+              style={{ background:"#ffffff0f", border:"1px solid #ffffff15", borderRadius:12, overflow:"hidden", cursor:"pointer", transition:"all .22s" }}
+              onMouseEnter={e => { e.currentTarget.style.transform="translateY(-4px)"; e.currentTarget.style.boxShadow=`0 16px 36px ${t.color}60`; e.currentTarget.style.borderColor=t.color; }}
+              onMouseLeave={e => { e.currentTarget.style.transform=""; e.currentTarget.style.boxShadow=""; e.currentTarget.style.borderColor="#ffffff15"; }}>
+              <TemplatePreview tpl={t} />
+              <div style={{ padding:"9px 12px" }}>
+                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:2 }}>
+                  <h3 style={{ color:"#fff", fontSize:12.5, fontWeight:700, margin:0, lineHeight:1.3 }}>{t.name}</h3>
+                  <span style={{ background:t.color+"28", color:t.color==="#1a1a1a"?"#aaa":t.color, fontSize:8, fontWeight:600, padding:"1px 7px", borderRadius:20, marginLeft:4, border:`1px solid ${t.color}35`, flexShrink:0, whiteSpace:"nowrap" }}>ATS ✓</span>
+                </div>
+                <div style={{ color:"#ffffff50", fontSize:9.5, marginBottom:7 }}>{t.cat}</div>
+                <button style={{ width:"100%", padding:"7px 0", background:`linear-gradient(90deg,${t.color},${t.accent})`, color:"#fff", border:"none", borderRadius:6, fontWeight:700, fontSize:12, cursor:"pointer" }}>
+                  Use Template →
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
+  /* ── JD ANALYSIS STEP ──────────────────────────────────────────────────── */
+  if (step === "jd") {
+    return <JDAnalysisStep
+      tpl={tpl}
+      onBack={() => setStep("gallery")}
+      onContinue={(analysis) => {
+        setJdData(analysis);
+        setStep("form");
+      }}
+    />;
+  }
+
+  /* ── FORM ─────────────────────────────────────────────────────────────── */
+  if (step === "form") {
+    const showProj = [2,9,11,12,13,14,20].includes(tpl.id);
+    const showPub  = tpl.id === 7;
+    const showFed  = tpl.id === 10;
+
+    return (
+      <div style={{ height:"100vh", background:"#f4f5f7", fontFamily:"'Segoe UI',sans-serif", display:"flex", flexDirection:"column" }}>
+        {/* top bar */}
+        <div style={{ background:tpl.color, padding:"10px 16px", display:"flex", alignItems:"center", gap:10, boxShadow:"0 2px 10px #00000030", flexShrink:0 }}>
+          <button onClick={() => setStep("jd")} style={{ background:"#ffffff20", border:"none", color:"#fff", padding:"5px 11px", borderRadius:5, cursor:"pointer", fontSize:12 }}>← Back</button>
+          <div>
+            <div style={{ color:"#ffffffaa", fontSize:9.5 }}>Template #{tpl.id}</div>
+            <div style={{ color:"#fff", fontWeight:700, fontSize:13.5 }}>{tpl.name} <span style={{ fontWeight:400, fontSize:11, opacity:.7 }}>— {tpl.cat}</span></div>
+          </div>
+          <button onClick={preview} style={{ marginLeft:"auto", background:"#fff", color:tpl.color, border:"none", padding:"7px 16px", borderRadius:7, fontWeight:700, fontSize:12.5, cursor:"pointer" }}>
+            Preview & Download →
+          </button>
+        </div>
+
+        {/* JD analysis ribbon — shown when jdData is present */}
+        {jdData && (
+          <div style={{ background:`${tpl.color}18`, borderBottom:`1px solid ${tpl.color}35`, padding:"8px 16px", display:"flex", alignItems:"center", gap:10, flexWrap:"wrap", flexShrink:0 }}>
+            <span style={{ background:tpl.color, color:"#fff", fontSize:10, fontWeight:700, padding:"3px 9px", borderRadius:20, whiteSpace:"nowrap" }}>🎯 JOB MATCH</span>
+            <span style={{ fontSize:12, fontWeight:700, color:"#333" }}>{jdData.jobTitle || "Role"}</span>
+            {jdData.company && <span style={{ fontSize:11.5, color:"#555" }}>@ {jdData.company}</span>}
+            {jdData.experienceYears && (
+              <span style={{ fontSize:11, background:"#ffffff80", padding:"2px 9px", borderRadius:20, color:"#333", border:"1px solid #ddd" }}>
+                ⏱ {jdData.experienceYears}
+              </span>
+            )}
+            {jdData.workMode && (
+              <span style={{ fontSize:11, background:"#ffffff80", padding:"2px 9px", borderRadius:20, color:"#333", border:"1px solid #ddd" }}>
+                📍 {jdData.workMode}
+              </span>
+            )}
+            <div style={{ marginLeft:"auto", display:"flex", gap:7, flexWrap:"wrap" }}>
+              {(jdData.techStack||[]).slice(0, 5).map((t2, i) => (
+                <span key={i} style={{ fontSize:10.5, background:tpl.color+"20", color:tpl.color, padding:"2px 8px", borderRadius:20, fontWeight:600, border:`1px solid ${tpl.color}40` }}>{t2}</span>
+              ))}
+              {(jdData.techStack||[]).length > 5 && <span style={{ fontSize:10.5, color:"#888" }}>+{(jdData.techStack||[]).length - 5} more</span>}
+            </div>
+          </div>
+        )}
+
+        <div style={{ display:"flex", flex:1, overflow:"hidden" }}>
+          <AdSidebar side="left" />
+
+          <div style={{ flex:1, overflowY:"auto", padding:"14px 12px" }}>
+            <div style={{ maxWidth:660, margin:"0 auto" }}>
+
+              {/* photo */}
+              {tpl.photo && (
+                <Card title="Profile Photo (shown on LEFT of resume)" color={tpl.color}>
+                  <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+                    <div style={{ width:60, height:60, borderRadius:6, background:"#eee", overflow:"hidden", border:`2px solid ${tpl.color}`, flexShrink:0 }}>
+                      {form.photoPreview
+                        ? <img src={form.photoPreview} style={{ width:"100%", height:"100%", objectFit:"cover" }} alt="p" />
+                        : <div style={{ width:"100%", height:"100%", display:"flex", alignItems:"center", justifyContent:"center", fontSize:22, color:"#ccc" }}>👤</div>}
+                    </div>
+                    <div>
+                      <input type="file" accept="image/*" onChange={handlePhoto} id="pu" style={{ display:"none" }} />
+                      <label htmlFor="pu" style={{ display:"inline-block", padding:"6px 13px", background:tpl.color, color:"#fff", borderRadius:5, cursor:"pointer", fontSize:12, fontWeight:600 }}>Upload Photo</label>
+                      {form.photoPreview && <button onClick={() => setF("photoPreview", null)} style={{ marginLeft:7, background:"none", border:"1px solid #ddd", padding:"5px 9px", borderRadius:5, cursor:"pointer", fontSize:11 }}>Remove</button>}
+                      <div style={{ fontSize:10, color:"#888", marginTop:3 }}>JPG/PNG · Square crop · appears LEFT of name</div>
+                    </div>
+                  </div>
+                </Card>
+              )}
+
+              {/* personal */}
+              <Card title="Personal Information" color={tpl.color}>
+                <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"0 11px" }}>
+                  <Inp label="First Name" value={form.firstName} onChange={v=>setF("firstName",v)} required />
+                  <Inp label="Last Name"  value={form.lastName}  onChange={v=>setF("lastName",v)}  required />
+                  <Inp label="Email"      value={form.email}     onChange={v=>setF("email",v)}     type="email" required />
+                  <Inp label="Phone"      value={form.phone}     onChange={v=>setF("phone",v)}     type="tel" placeholder="+1 555 000 0000" />
+                  <Inp label="Location"   value={form.location}  onChange={v=>setF("location",v)}  placeholder="City, State" />
+                  <Inp label="Target Job Title" value={form.jobTitle} onChange={v=>setF("jobTitle",v)} placeholder="e.g. Senior Software Engineer" />
+                </div>
+                <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:"0 11px" }}>
+                  <LnkInp label="LinkedIn URL"    value={form.linkedin} onChange={v=>setF("linkedin",v)} placeholder="linkedin.com/in/name" />
+                  <LnkInp label="GitHub URL"      value={form.github}   onChange={v=>setF("github",v)}   placeholder="github.com/username" />
+                  <LnkInp label="Portfolio/Site"  value={form.website}  onChange={v=>setF("website",v)}  placeholder="yoursite.com" />
+                </div>
+                <TA label="Professional Summary (keyword-rich, 2-4 sentences)" value={form.summary} onChange={v=>setF("summary",v)}
+                  placeholder="Results-driven professional with X years of experience in... Proven track record of..." rows={3} />
+              </Card>
+
+              {/* experience */}
+              <Card title="Work Experience" color={tpl.color}
+                onAdd={() => addI("experience", { company:"", title:"", startDate:"", endDate:"", current:false, location:"", bullets:"" })}
+                addLabel="Add Position">
+                {form.experience.map((exp, idx) => (
+                  <div key={exp.id} style={{ marginBottom:13, paddingBottom:13, borderBottom:idx < form.experience.length-1 ? "1px dashed #eee" : "none" }}>
+                    <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:6 }}>
+                      <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                        <span style={{ fontWeight:700, fontSize:12, color:tpl.color }}>Position {idx+1}</span>
+                        {exp.current && <span style={{ background:`linear-gradient(90deg,${tpl.color},${tpl.accent})`, color:"#fff", fontSize:10, fontWeight:700, padding:"2px 9px", borderRadius:20 }}>● Current</span>}
+                      </div>
+                      {idx > 0 && <button onClick={() => delI("experience", idx)} style={{ background:"none", border:"1px solid #ffaaaa", color:"#e53e3e", padding:"1px 9px", borderRadius:4, cursor:"pointer", fontSize:11 }}>Remove</button>}
+                    </div>
+                    <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"0 11px" }}>
+                      <Inp label="Job Title"    value={exp.title}   onChange={v => setN("experience",idx,"title",v)} />
+                      <Inp label="Company Name" value={exp.company} onChange={v => setN("experience",idx,"company",v)} />
+                      <MonthPick label="Start Date" value={exp.startDate} onChange={v => setN("experience",idx,"startDate",v)} />
+                      {exp.current
+                        ? <div style={{ marginBottom:10 }}>
+                            <label style={{ display:"block", fontSize:10.5, fontWeight:600, color:"#555", marginBottom:2, textTransform:"uppercase", letterSpacing:0.4 }}>End Date</label>
+                            <div style={{ padding:"6px 10px", border:`1px solid ${tpl.color}60`, borderRadius:5, fontSize:12.5, background:`${tpl.color}08`, color:tpl.color, fontWeight:700 }}>Present (Current Role)</div>
+                          </div>
+                        : <MonthPick label="End Date" value={exp.endDate} onChange={v => setN("experience",idx,"endDate",v)} />
+                      }
+                      <Inp label="Location" value={exp.location} onChange={v => setN("experience",idx,"location",v)} placeholder="City, State or Remote" />
+                    </div>
+                    {/* currently working toggle */}
+                    <label style={{ display:"inline-flex", alignItems:"center", gap:8, cursor:"pointer", marginBottom:10, marginTop:2, padding:"5px 11px", background:exp.current?`${tpl.color}12`:"#f5f6fa", border:`1px solid ${exp.current?tpl.color+"50":"#e0e0e0"}`, borderRadius:6 }}>
+                      <input type="checkbox" checked={exp.current}
+                        onChange={e => { setN("experience",idx,"current",e.target.checked); if(e.target.checked) setN("experience",idx,"endDate",""); }}
+                        style={{ width:15, height:15, accentColor:tpl.color, cursor:"pointer" }} />
+                      <span style={{ fontSize:12, fontWeight:600, color:exp.current?tpl.color:"#555" }}>✅ I currently work here</span>
+                      {exp.current && exp.title && <span style={{ fontSize:10.5, color:"#888" }}>— shows as <strong style={{ color:tpl.color }}>{exp.title}</strong></span>}
+                    </label>
+    {/* keyword suggestions */}
+                    <KwPanel
+                      jobTitle={exp.title || form.jobTitle}
+                      skills={form.skills}
+                      color={tpl.color}
+                      jdKeywords={jdData ? jdData.keywords : []}
+                      onInsert={kw => insertKw(kw, idx)}
+                    />
+                    <TA label="Key Responsibilities & Achievements (one per line — keywords auto-bold)"
+                      value={exp.bullets} onChange={v => setN("experience",idx,"bullets",v)}
+                      placeholder={"- Led team of 8 engineers, deployed microservices on Kubernetes\n- Reduced latency by 40% through Redis caching\n- Implemented CI/CD pipeline cutting release time by 60%"}
+                      rows={5} />
+                  </div>
+                ))}
+              </Card>
+
+              {/* education */}
+              <Card title="Education" color={tpl.color}
+                onAdd={() => addI("education", { school:"", degree:"", field:"", gpa:"", startDate:"", endDate:"", honors:"" })}
+                addLabel="Add Degree">
+                {form.education.map((edu, idx) => (
+                  <div key={edu.id} style={{ marginBottom:11, paddingBottom:11, borderBottom:idx < form.education.length-1 ? "1px dashed #eee" : "none" }}>
+                    <div style={{ display:"flex", justifyContent:"space-between", marginBottom:6 }}>
+                      <span style={{ fontWeight:700, fontSize:12, color:tpl.color }}>Degree {idx+1}</span>
+                      {idx > 0 && <button onClick={() => delI("education", idx)} style={{ background:"none", border:"1px solid #ffaaaa", color:"#e53e3e", padding:"1px 9px", borderRadius:4, cursor:"pointer", fontSize:11 }}>Remove</button>}
+                    </div>
+                    <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"0 11px" }}>
+                      <Inp label="University / School" value={edu.school} onChange={v => setN("education",idx,"school",v)} />
+                      <Inp label="Degree Type" value={edu.degree} onChange={v => setN("education",idx,"degree",v)} placeholder="Bachelor of Science" />
+                      <Inp label="Field of Study" value={edu.field} onChange={v => setN("education",idx,"field",v)} placeholder="Computer Science" />
+                      <Inp label="GPA" value={edu.gpa} onChange={v => setN("education",idx,"gpa",v)} type="number" min="0" max="4" placeholder="3.8" />
+                      <MonthPick label="Start Date" value={edu.startDate} onChange={v => setN("education",idx,"startDate",v)} />
+                      <MonthPick label="End Date"   value={edu.endDate}   onChange={v => setN("education",idx,"endDate",v)} />
+                      <Inp label="Honors / Distinctions" value={edu.honors} onChange={v => setN("education",idx,"honors",v)} placeholder="Magna Cum Laude" />
+                    </div>
+                  </div>
+                ))}
+              </Card>
+
+              {/* skills */}
+              <Card title="Technical Skills" color={tpl.color}>
+                <div style={{ background:`${tpl.color}08`, borderRadius:6, padding:"7px 11px", marginBottom:9, fontSize:10.5, color:"#555", lineHeight:1.5 }}>
+                  💡 Fill categories that apply. Skills also power keyword suggestions above.
+                </div>
+                <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"0 11px" }}>
+                  <Inp label="⚛️ Frontend"  value={form.skills.frontend} onChange={v=>setSk("frontend",v)} placeholder="React, Vue, TypeScript, HTML, CSS" />
+                  <Inp label="🖥️ Backend"   value={form.skills.backend}  onChange={v=>setSk("backend",v)}  placeholder="Node.js, Python, Java, FastAPI" />
+                  <Inp label="☁️ Cloud"     value={form.skills.cloud}    onChange={v=>setSk("cloud",v)}    placeholder="AWS, Azure, GCP, Docker, K8s" />
+                  <Inp label="🗄️ Databases" value={form.skills.database} onChange={v=>setSk("database",v)} placeholder="PostgreSQL, MySQL, MongoDB, Redis" />
+                  <Inp label="🔧 Tools"     value={form.skills.tools}    onChange={v=>setSk("tools",v)}    placeholder="Git, JIRA, Figma, Jenkins" />
+                  <Inp label="✨ Other"     value={form.skills.other}    onChange={v=>setSk("other",v)}    placeholder="Agile, Scrum, ML, Leadership" />
+                </div>
+              </Card>
+
+              {/* certifications */}
+              <Card title="Certifications & Licenses" color={tpl.color}
+                onAdd={() => addI("certifications", { name:"", issuer:"", date:"", expiry:"" })}
+                addLabel="Add Cert">
+                {form.certifications.map((cert, idx) => (
+                  <div key={cert.id} style={{ display:"grid", gridTemplateColumns:"2fr 2fr 1fr 1fr", gap:"0 8px", marginBottom:9, paddingBottom:9, borderBottom:idx<form.certifications.length-1?"1px dashed #eee":"none" }}>
+                    <Inp label="Certification Name" value={cert.name}   onChange={v=>setN("certifications",idx,"name",v)}   placeholder="AWS Solutions Architect" />
+                    <Inp label="Issuing Org"         value={cert.issuer} onChange={v=>setN("certifications",idx,"issuer",v)} placeholder="Amazon Web Services" />
+                    <MonthPick label="Issue Date" value={cert.date}   onChange={v=>setN("certifications",idx,"date",v)} />
+                    <MonthPick label="Expiry"     value={cert.expiry} onChange={v=>setN("certifications",idx,"expiry",v)} />
+                  </div>
+                ))}
+              </Card>
+
+              {/* projects */}
+              {showProj && (
+                <Card title="Projects" color={tpl.color}
+                  onAdd={() => addI("projects", { name:"", tech:"", description:"", url:"" })}
+                  addLabel="Add Project">
+                  {form.projects.map((proj, idx) => (
+                    <div key={proj.id} style={{ marginBottom:11, paddingBottom:11, borderBottom:idx<form.projects.length-1?"1px dashed #eee":"none" }}>
+                      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"0 11px" }}>
+                        <Inp label="Project Name" value={proj.name} onChange={v=>setN("projects",idx,"name",v)} />
+                        <Inp label="Tech Stack"   value={proj.tech} onChange={v=>setN("projects",idx,"tech",v)} placeholder="React, Node.js, PostgreSQL" />
+                        <LnkInp label="Project URL / GitHub" value={proj.url} onChange={v=>setN("projects",idx,"url",v)} />
+                      </div>
+                      <TA label="Description" value={proj.description} onChange={v=>setN("projects",idx,"description",v)} rows={2} placeholder="What you built and its impact..." />
+                    </div>
+                  ))}
+                </Card>
+              )}
+
+              {/* publications */}
+              {showPub && (
+                <Card title="Publications" color={tpl.color}
+                  onAdd={() => addI("publications", { title:"", journal:"", year:"", authors:"" })}
+                  addLabel="Add Publication">
+                  {form.publications.map((pub, idx) => (
+                    <div key={pub.id} style={{ marginBottom:9, paddingBottom:9, borderBottom:idx<form.publications.length-1?"1px dashed #eee":"none" }}>
+                      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"0 11px" }}>
+                        <Inp label="Title"   value={pub.title}   onChange={v=>setN("publications",idx,"title",v)} />
+                        <Inp label="Journal" value={pub.journal} onChange={v=>setN("publications",idx,"journal",v)} />
+                        <Inp label="Year" value={pub.year} onChange={v=>setN("publications",idx,"year",v)} type="number" min="1900" max="2099" placeholder="2024" />
+                        <Inp label="Authors" value={pub.authors} onChange={v=>setN("publications",idx,"authors",v)} placeholder="Smith J., Doe A." />
+                      </div>
+                    </div>
+                  ))}
+                </Card>
+              )}
+
+              {/* federal */}
+              {showFed && (
+                <Card title="Federal Application Details" color={tpl.color}>
+                  <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:"0 11px" }}>
+                    <Inp label="Citizenship"        value={form.citizenship}       onChange={v=>setF("citizenship",v)}       placeholder="U.S. Citizen" />
+                    <Inp label="Security Clearance" value={form.securityClearance} onChange={v=>setF("securityClearance",v)} placeholder="TS/SCI, Secret" />
+                    <Inp label="Federal Grade"      value={form.federalGrade}      onChange={v=>setF("federalGrade",v)}      placeholder="GS-13, 0301" />
+                  </div>
+                </Card>
+              )}
+
+              {/* additional */}
+              <Card title="Additional Information" color={tpl.color}>
+                <TA label="Awards & Achievements (one per line)" value={form.awards}     onChange={v=>setF("awards",v)}     rows={3} placeholder={"Employee of the Year 2023\nHackathon Winner\nDean's List"} />
+                <TA label="Languages (comma-separated)"          value={form.languages}  onChange={v=>setF("languages",v)}  rows={2} placeholder="English (Native), Spanish (Fluent)" />
+                <TA label="Volunteer / Interests (optional)"     value={form.volunteer}  onChange={v=>setF("volunteer",v)}  rows={2} />
+              </Card>
+
+              <div style={{ textAlign:"center", padding:"14px 0 24px" }}>
+                <button onClick={preview} style={{ padding:"11px 34px", background:`linear-gradient(90deg,${tpl.color},${tpl.accent})`, color:"#fff", border:"none", borderRadius:8, fontWeight:800, fontSize:14.5, cursor:"pointer", boxShadow:`0 4px 16px ${tpl.color}50` }}>
+                  Preview My Resume →
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <AdSidebar side="right" />
+        </div>
+      </div>
+    );
+  }
+
+  /* ── PREVIEW ──────────────────────────────────────────────────────────── */
+  if (step === "preview") return (
+    <div style={{ height:"100vh", background:"#e8eaed", fontFamily:"'Segoe UI',sans-serif", display:"flex", flexDirection:"column" }}>
+      <div style={{ background:tpl.color, padding:"10px 18px", display:"flex", alignItems:"center", gap:10, boxShadow:"0 2px 10px #00000030", flexShrink:0 }}>
+        <button onClick={() => setStep("form")} style={{ background:"#ffffff20", border:"none", color:"#fff", padding:"5px 11px", borderRadius:5, cursor:"pointer", fontSize:12 }}>← Edit</button>
+        <span style={{ color:"#fff", fontWeight:700, fontSize:13.5, marginRight:"auto" }}>{tpl.name} — Preview</span>
+        <button onClick={async () => { setBusy(true); dlDOCX(tpl, form); setBusy(false); }} disabled={busy}
+          style={{ background:"#1a73e8", color:"#fff", border:"none", padding:"7px 15px", borderRadius:6, fontWeight:700, fontSize:12.5, cursor:"pointer" }}>📄 Word</button>
+        <button onClick={async () => { setBusy(true); dlPDF(tpl, form); setBusy(false); }} disabled={busy}
+          style={{ background:"#e53935", color:"#fff", border:"none", padding:"7px 15px", borderRadius:6, fontWeight:700, fontSize:12.5, cursor:"pointer" }}>📑 PDF</button>
+      </div>
+      <div style={{ background:"#fff", borderBottom:"1px solid #ddd", padding:"5px 18px", display:"flex", gap:8, alignItems:"center", flexWrap:"wrap", flexShrink:0 }}>
+        <div style={{ background:"#e8f5e9", border:"1px solid #81c784", borderRadius:5, padding:"3px 11px", fontSize:11, fontWeight:700, color:"#2e7d32" }}>✅ ATS Score: 95%+</div>
+        {["Bullet points everywhere","1.15 line-height","Keywords auto-bolded","Photo-left layout","No sidebar columns"].map((b,i) => (
+          <div key={i} style={{ background:"#e3f2fd", border:"1px solid #90caf9", borderRadius:5, padding:"3px 10px", fontSize:10.5, color:"#1565c0" }}>✓ {b}</div>
+        ))}
+      </div>
+      <div style={{ display:"flex", flex:1, overflow:"hidden" }}>
+        <AdSidebar side="left" />
+        <div style={{ flex:1, overflowY:"auto", padding:"18px 14px" }}>
+          <div style={{ maxWidth:790, margin:"0 auto", background:"#fff", boxShadow:"0 6px 28px #00000020", borderRadius:2 }}>
+            <div dangerouslySetInnerHTML={{ __html: html }} />
+          </div>
+        </div>
+        <AdSidebar side="right" />
+      </div>
+    </div>
+  );
+
+  return null;
+}
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(React.createElement(App));
+  </script>
+</body>
+</html>
