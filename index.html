@@ -193,7 +193,7 @@ function buildHTML(tpl,data){
   const cc=cj&&cj.current?cj.company:"";
   const kws=getKW(dt,data.skills);
   const LH="line-height:1.15;";const HA=isLeft?"left":"center";
-  const lnk=(u,label)=>u?'<a href="'+http(u)+'" target="_blank" style="color:inherit;text-decoration:none;"><span style="font-weight:700;">'+label+':</span> <span style="color:'+color+';">'+u+"</span></a>":"";
+  const lnk=(u,label)=>u?'<a href="'+http(u)+'" target="_blank" style="color:inherit;text-decoration:none;">'+(label?'<span style="font-weight:700;">'+label+':</span> <span style="color:'+color+';">'+u+'</span>':u)+"</a>":"";
   const ctc=[
     data.email?'<a href="mailto:'+data.email+'" style="color:inherit;text-decoration:none;"><span style="font-weight:700;">Email:</span> '+data.email+"</a>":"",
     data.phone?'<a href="tel:'+data.phone+'" style="color:inherit;text-decoration:none;"><span style="font-weight:700;">Phone:</span> '+data.phone+"</a>":"",
@@ -551,7 +551,6 @@ function App(){
     const bullets=generateBullets(jdData.keywords,jdData.jobTitle,isFresher);
     setForm(prev=>({
       ...prev,
-      jobTitle:jdData.jobTitle||prev.jobTitle,
       skills:{...prev.skills,other:jdData.techStack&&jdData.techStack.length?jdData.techStack.join(", ").slice(0,150):prev.skills.other},
       experience:prev.experience.map((exp,i)=>i===0?{...exp,bullets}:exp),
     }));
@@ -651,7 +650,7 @@ function App(){
               <div style={{fontSize:36,marginBottom:10}}>{opt.icon}</div>
               <div style={{fontWeight:800,fontSize:16,marginBottom:4}}>{opt.title}</div>
               <div style={{color:"#ffffffaa",fontSize:11.5,marginBottom:10,whiteSpace:"pre-line"}}>{opt.sub}</div>
-              <div style={{background:tpl.c+"20",border:"1px solid "+tpl.c+"40",borderRadius:8,padding:"8px 10px",fontSize:10.5,color:tpl.c,fontWeight:600,lineHeight:1.4}}>{opt.desc}</div>
+              <div style={{background:"rgba(255,255,255,0.12)",border:"1px solid rgba(255,255,255,0.25)",borderRadius:8,padding:"8px 10px",fontSize:10.5,color:"#fff",fontWeight:600,lineHeight:1.4}}>{opt.desc}</div>
             </button>
           ))}
         </div>
@@ -678,7 +677,7 @@ function App(){
             <div style={{maxWidth:660,margin:"0 auto"}}>
               {tpl.p&&<Card title="Profile Photo" color={tpl.c}><div style={{display:"flex",alignItems:"center",gap:12}}><div style={{width:60,height:60,borderRadius:6,background:"#eee",overflow:"hidden",border:"2px solid "+tpl.c,flexShrink:0}}>{form.photoPreview?<img src={form.photoPreview} style={{width:"100%",height:"100%",objectFit:"cover"}} alt="p"/>:<div style={{width:"100%",height:"100%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,color:"#ccc"}}>+</div>}</div><div><input type="file" accept="image/*" onChange={handlePhoto} id="pu" style={{display:"none"}}/><label htmlFor="pu" style={{display:"inline-block",padding:"6px 13px",background:tpl.c,color:"#fff",borderRadius:5,cursor:"pointer",fontSize:12,fontWeight:600}}>Upload Photo</label>{form.photoPreview&&<button onClick={()=>setF("photoPreview",null)} style={{marginLeft:7,background:"none",border:"1px solid #ddd",padding:"5px 9px",borderRadius:5,cursor:"pointer",fontSize:11}}>Remove</button>}</div></div></Card>}
               <Card title="Personal Information" color={tpl.c}>
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"0 11px"}}><Inp label="First Name" value={form.firstName} onChange={v=>setF("firstName",v)} required/><Inp label="Last Name" value={form.lastName} onChange={v=>setF("lastName",v)} required/><Inp label="Email" type="email" value={form.email} onChange={v=>setF("email",v)} required/><Inp label="Phone" type="tel" value={form.phone} onChange={v=>setF("phone",v)} placeholder="+91 98765 43210"/><Inp label="Location" value={form.location} onChange={v=>setF("location",v)} placeholder="City, State"/><Inp label="Target Job Title" value={form.jobTitle} onChange={v=>setF("jobTitle",v)} placeholder="e.g. Senior Software Engineer"/></div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"0 11px"}}><Inp label="First Name" value={form.firstName} onChange={v=>setF("firstName",v)} required/><Inp label="Last Name" value={form.lastName} onChange={v=>setF("lastName",v)} required/><Inp label="Email" type="email" value={form.email} onChange={v=>setF("email",v)} required/><Inp label="Phone" type="tel" value={form.phone} onChange={v=>setF("phone",v)} placeholder="+91 98765 43210"/><Inp label="Location" value={form.location} onChange={v=>setF("location",v)} placeholder="City, State"/>{profileType!=="fresher"&&<Inp label="Current Job Title" value={form.jobTitle} onChange={v=>setF("jobTitle",v)} placeholder="e.g. Senior Software Engineer"/>}</div>
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"0 11px"}}><LInp label="LinkedIn" value={form.linkedin} onChange={v=>setF("linkedin",v)} placeholder="linkedin.com/in/name"/><LInp label="GitHub" value={form.github} onChange={v=>setF("github",v)} placeholder="github.com/username"/><LInp label="Website" value={form.website} onChange={v=>setF("website",v)} placeholder="yoursite.com"/></div>
                 <TA label="Professional Summary" value={form.summary} onChange={v=>setF("summary",v)} placeholder="Results-driven professional with X years of experience..." rows={3}/>
               </Card>
